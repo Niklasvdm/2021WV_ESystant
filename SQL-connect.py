@@ -78,10 +78,16 @@ GROUP BY u.user_id , category
 ORDER BY a.category ASC'''
 
 main_df = pd.read_sql(sql_prompt, db)
+"""
+zoiets zou handig zijn als we zouden groeperen per user
+main_df = main_df.head()
+.tail(len(main_df.index)*0.9)- int(len(main_df.index)*0.9))
+"""
+
 
 #print(main_df)
 
-#print(main_df.to_string())
+#print(main_df.info)
 
 used_cat_df = pd.read_sql("SELECT t.category FROM(" + sql_prompt + ") as t GROUP BY category", db)
 
@@ -143,15 +149,8 @@ def predictor(user_id):
     data_user, actual_answer = get_data_user(user_id)
     #print("INDICATORS PREDICTOR MEGA", indicators_of_user)
     prediction_megatree = megatree.predict([data_user])
-    print(prediction_megatree, actual_answer)
+    return prediction_megatree, actual_answer
 
 
 for x in all_user_df["user_id"]:
-    print(x)
-    predictor(x)
-
-
-
-
-
-
+    print(predictor(x))
