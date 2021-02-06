@@ -102,6 +102,8 @@ wrong = 0
 dev_wrong = 0
 for x in range(len(score_to_predict)):
     pred = clf.predict([indicators_to_predict[x]])[0]
+    print([indicators_to_predict[x]])
+    print(clf.predict([indicators_to_predict[x]]))
     scr = score_to_predict[x]
     if ((pred < 0.5 and scr < 0.5) or (pred >= 0.5 and scr >= 0.5)):
         correct += 1
