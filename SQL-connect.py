@@ -48,6 +48,7 @@ for x in result:
 
 # print(df)
 '''
+
 sql_prompt = '''
 SELECT 
     opl_ID,
@@ -76,24 +77,24 @@ FROM
 GROUP BY u.user_id , category
 ORDER BY a.category ASC'''
 
-df1 = pd.read_sql(sql_prompt, db)
+main_df = pd.read_sql(sql_prompt, db)
 
-#print(df1)
+#print(main_df)
 
-#print(df1.to_string())
+#print(main_df.to_string())
 
-df2 = pd.read_sql("SELECT t.category FROM(" + sql_prompt + ") as t GROUP BY category", db)
+used_cat_df = pd.read_sql("SELECT t.category FROM(" + sql_prompt + ") as t GROUP BY category", db)
 
-#print(df2)
+#print(used_cat_df)
 
-clf = tree.DecisionTreeRegressor(max_depth=4)
-clf_mega = tree.DecisionTreeRegressor(max_depth=4)
+clf = tree.DecisionTreeRegressor(max_depth=3)
+clf_mega = tree.DecisionTreeRegressor(max_depth=3)
 
 dict_of_category_trees = {}
 
-df1_no_user = df1.drop(columns=["user_id"])
-for x in df2["category"]:
-    df_of_category = df1_no_user.query("category ==" + str(x)).drop(columns=["category"])
+main_df_no_user = main_df.drop(columns=["user_id"])
+for x in used_cat_df["category"]:
+    df_of_category = main_df_no_user.query("category ==" + str(x)).drop(columns=["category"])
     indicators = []
     scores = []
     for l in df_of_category.values.tolist():
@@ -101,35 +102,53 @@ for x in df2["category"]:
         scores.append(l[-2:])
     dict_of_category_trees[x] = clf.fit(indicators, scores)
 
-df3 = pd.read_sql("SELECT user_id FROM users", db)
+all_user_df = pd.read_sql("SELECT user_id FROM users", db)
+
+
+def get_data_user(user_id):
+    df_of_user = main_df[main_df["user_id"] == user_id].drop(columns=["user_id"])
+    if not df_of_user.empty:
+        oplID = df_of_user["opl_ID"].iloc[0]
+        scores = [df_of_user["score_prolog"].iloc[0], df_of_user["score_haskell"].iloc[0]]
+    else:
+        oplID = 0
+        scores = [0, 0]
+
+    indicators_user = []
+
+    for cat in df_of_user["category"]:
+        df_of_category_and_user = df_of_user[df_of_user.category == cat].drop(columns=["category"])
+        for l in df_of_category_and_user.values.tolist():
+            pred = dict_of_category_trees[cat].predict([l[:-2]])[0]
+            indicators_user.append([cat, pred[0], pred[1]])
+
+    for cat in [x for x in set(used_cat_df["category"]) if x not in set(df_of_user["category"])]:
+        pred = dict_of_category_trees[cat].predict([[oplID, 0, 0, 0, 0, 0, 0]])[0]
+        indicators_user.append([cat, pred[0], pred[1]])
+    indicators_user.sort()
+    return [x for row in indicators_user for x in row[1:]], scores
+
 
 #print(df3.to_string())
 #MEGATREE
 indicators_mega,scores_mega = [], []
-for user in df3["user_id"]:
-    df_of_user = df1[df1["user_id"] == user].drop(columns=["user_id"])
-    for cat in df2["category"]:
-        df_of_category_and_user = df_of_user[df_of_user.category == cat].drop(columns=["category"])
-        for l in df_of_category_and_user.values.tolist():
-            pred = dict_of_category_trees[cat].predict([l[:-2]])[0]
-            indicators_mega.append([cat, pred[0], pred[1]])
-            scores_mega.append(l[-2:])
+for user in all_user_df["user_id"]:
+    data = get_data_user(user)
+    indicators_mega.append(data[0])
+    scores_mega.append(data[1])
 #print("INDICATORS MEGA" , indicators_mega)
 megatree = clf_mega.fit(indicators_mega,scores_mega)
 
 def predictor(user_id):
-    dataframe = df1[df1["user_id"] == user_id].drop(columns=["user_id"])
-    indicators_of_user = []
-    for category in dataframe['category']:
-        dataframe_of_category_and_user = dataframe[dataframe.category == category].drop(columns=["category"])
-        prediction = dict_of_category_trees[category].predict([dataframe_of_category_and_user.values.tolist()[0][:-2]])[0]
-        actual_answer = dataframe_of_category_and_user.values.tolist()[0][-2:]
-        indicators_of_user.append([category, prediction[0], prediction[1]])
+    data_user, actual_answer = get_data_user(user_id)
     #print("INDICATORS PREDICTOR MEGA", indicators_of_user)
-    prediction_megatree = megatree.predict(indicators_of_user)
+    prediction_megatree = megatree.predict([data_user])
     print(prediction_megatree, actual_answer)
 
-predictor('00e4208b3d1ddbf679c2f77c1f2322cb')
+
+for x in all_user_df["user_id"]:
+    print(x)
+    predictor(x)
 
 
 
