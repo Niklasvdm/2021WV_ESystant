@@ -1,7 +1,7 @@
 import mysql.connector
 import pandas as pd
 from mysql.connector import Error
-import Levenshtein
+#import Levenshtein
 from sklearn import tree
 
 
