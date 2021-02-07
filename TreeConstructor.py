@@ -1,9 +1,4 @@
-import pandas as pd
-import matplotlib.pyplot as plt
-from pandas import DataFrame, Series
-from pandas.io.parsers import TextFileReader
-from sklearn import tree
-from BlobFileAnalysis import  create_database_connection
+from BlobFileAnalysis import create_database_connection
 
 
 # POSSIBLE FUNCTIONS IN THIS FILE ARE:
@@ -25,18 +20,22 @@ from BlobFileAnalysis import  create_database_connection
 #
 #
 
-#First thing we're going to do is just writing a function to fetch data. We write two: One given just a query and a database,  one more detailed with host info
-def queryDatabase(query,database):
-    db = create_database_connection("localhost", "root", "", database)
+# First thing we're going to do is just writing a function to fetch data. We write two: One given just a query and a
+# database,  one more detailed with host info
+
+# Ook in deze file weer belangrijk dat we de naam van databases en passwoord matchen
+def queryDatabase(query_text, database_name):
+    db = create_database_connection("localhost", "root", "", database_name)
     my_cursor = db.cursor()
-    my_cursor.execute(query)
+    my_cursor.execute(query_text)
     result = my_cursor.fetchall()
     return result
 
-def query(localhost,root,password,database,query):
-    db = create_database_connection(localhost,root,password,database)
+
+def query(localhost, root, password, database_name, query_text):
+    db = create_database_connection(localhost, root, password, database_name)
     my_cursor = db.cursor()
-    my_cursor.execute(query)
+    my_cursor.execute(query_text)
     result = my_cursor.fetchall()
     return result
 
@@ -57,26 +56,28 @@ def groupByUser(results_from_query):
 
     return myUserBase
 
-#https://stackoverflow.com/questions/12988351/split-a-dictionary-in-half
+
+# https://stackoverflow.com/questions/12988351/split-a-dictionary-in-half
 # Easy function. Just takes the first 90% Of the users.
 # For easy measure, change variable TEST_PERCENTAGE
 def testBase(d):
-    return dict(list(d.items())[:int(len(d)*TEST_PERCENTAGE)])
+    return dict(list(d.items())[:int(len(d) * TEST_PERCENTAGE)])
+
 
 def verificationBase(d):
-    return dict(list(d.items())[int(len(d)*TEST_PERCENTAGE):])
+    return dict(list(d.items())[int(len(d) * TEST_PERCENTAGE):])
+
+
 TEST_PERCENTAGE = 0.9
 VERIFICATION_PERCENTAGE = 1 - TEST_PERCENTAGE
 
-
-
-my_query = '''SELECT DISTINCT user_id, assignment_id FROM submissions WHERE user_id = '00e4208b3d1ddbf679c2f77c1f2322cb' ORDER BY user_id ASC'''
+my_query = "SELECT DISTINCT user_id, assignment_id FROM submissions " \
+           "WHERE user_id = '00e4208b3d1ddbf679c2f77c1f2322cb' ORDER BY user_id ASC"
 database = "esystant1920"
-queryResult = queryDatabase(my_query,database)
+queryResult = queryDatabase(my_query, database)
 byUser = groupByUser(queryResult)
 testDict = testBase(byUser)
 verificationDict = verificationBase(byUser)
-
 
 # clf = tree.DecisionTreeRegressor(max_depth=4)
 #

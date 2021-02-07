@@ -1,7 +1,7 @@
 import mysql.connector
 import pandas as pd
 from mysql.connector import Error
-#import Levenshtein
+# import Levenshtein
 from sklearn import tree
 
 
@@ -84,14 +84,13 @@ main_df = main_df.head()
 .tail(len(main_df.index)*0.9)- int(len(main_df.index)*0.9))
 """
 
+# print(main_df)
 
-#print(main_df)
-
-#print(main_df.info)
+# print(main_df.info)
 
 used_cat_df = pd.read_sql("SELECT t.category FROM(" + sql_prompt + ") as t GROUP BY category", db)
 
-#print(used_cat_df)
+# print(used_cat_df)
 
 clf = tree.DecisionTreeRegressor(max_depth=3)
 clf_mega = tree.DecisionTreeRegressor(max_depth=3)
@@ -135,19 +134,20 @@ def get_data_user(user_id):
     return [x for row in indicators_user for x in row[1:]], scores
 
 
-#print(df3.to_string())
-#MEGATREE
-indicators_mega,scores_mega = [], []
+# print(df3.to_string())
+# MEGATREE
+indicators_mega, scores_mega = [], []
 for user in all_user_df["user_id"]:
     data = get_data_user(user)
     indicators_mega.append(data[0])
     scores_mega.append(data[1])
-#print("INDICATORS MEGA" , indicators_mega)
-megatree = clf_mega.fit(indicators_mega,scores_mega)
+# print("INDICATORS MEGA" , indicators_mega)
+megatree = clf_mega.fit(indicators_mega, scores_mega)
+
 
 def predictor(user_id):
     data_user, actual_answer = get_data_user(user_id)
-    #print("INDICATORS PREDICTOR MEGA", indicators_of_user)
+    # print("INDICATORS PREDICTOR MEGA", indicators_of_user)
     prediction_megatree = megatree.predict([data_user])
     return prediction_megatree, actual_answer
 
