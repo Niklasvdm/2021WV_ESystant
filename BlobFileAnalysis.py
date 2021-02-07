@@ -25,6 +25,7 @@ import pandas as pd
 #       QUERYMULTIPLERESULTSTOLINES
 #           input: query dat verschillende files als input neemt
 #           ouput : Alle geformateerde strings in een 2-D lijst.
+#      GETRESULTSFROMDATABASE
 #      DATABASETOLINES
 #           databaseToLines(localhost,root,password,database,query)
 #               ~Vrij vanzelfssprekend.
@@ -147,10 +148,12 @@ def queryMultipleResultsToLines(query):
     result = my_cursor.fetchall()
     return bytesToLines(result)
 
-
-#sql_prompt = "SELECT compile_errors FROM results where result_id BETWEEN 41309 AND 41312 ;"
-
-#printMultipleLines(queryMultipleResultsToLines(sql_prompt))
+def getResultsFromDataBase(query,database):
+    db = create_database_connection("localhost", "root", "", database)
+    my_cursor = db.cursor()
+    my_cursor.execute(query)
+    result = my_cursor.fetchall()
+    return bytesToLines(result)
 
 def databaseToLines(localhost,root,password,database,query):
     db = create_database_connection(localhost,root,password,database)
@@ -160,4 +163,5 @@ def databaseToLines(localhost,root,password,database,query):
     return bytesToLines(result)
 
 
-
+#sql_prompt = "SELECT result_id,submission_id FROM results where result_id BETWEEN 41309 AND 41312 ;"
+#printMultipleLines(queryMultipleResultsToLines(sql_prompt))
