@@ -1,6 +1,28 @@
+from sklearn import tree
 from BlobFileAnalysis import create_database_connection
 
-
+my_tree_query = """SELECT 
+    u.user_id,
+    category,
+    SUM(nb_failed != 0) AS Failed_Submissions,
+    SUM(nb_failed = 0) AS Successfulll_Submissions,
+    SUM(r.style_result > '') AS amount_bad_style_submissions,
+    SUM(s.points_awarded) AS Points,
+    SUM(a.deadline * 10000 > s.timestamp) AS On_Time,
+    SUM(a.deadline * 10000 < s.timestamp) AS Too_Late,
+    score_prolog,
+    score_haskell
+FROM
+    submissions AS s
+        INNER JOIN
+    results AS r ON r.submission_id = s.submission_id
+        INNER JOIN
+    assignments AS a ON a.assignment_id = s.assignment_id
+        INNER JOIN
+    users AS u ON u.user_id = s.user_id
+        INNER JOIN
+    grades AS g ON g.user_id = u.user_id
+GROUP BY user_id , category"""
 # POSSIBLE FUNCTIONS IN THIS FILE ARE:
 #
 # QUERYDATABASE
@@ -24,6 +46,18 @@ from BlobFileAnalysis import create_database_connection
 # database,  one more detailed with host info
 
 # Ook in deze file weer belangrijk dat we de naam van databases en passwoord matchen
+# Er is een 2e functie voor die reden.
+
+niklashost = "localhost"
+niklasroot = "root"
+niklaspassw = ""
+
+
+# maxhost =
+# maxroot =
+# maxpassw =
+
+
 def queryDatabase(query_text, database_name):
     db = create_database_connection("localhost", "root", "", database_name)
     my_cursor = db.cursor()
@@ -71,13 +105,44 @@ def verificationBase(d):
 TEST_PERCENTAGE = 0.9
 VERIFICATION_PERCENTAGE = 1 - TEST_PERCENTAGE
 
-my_query = "SELECT DISTINCT user_id, assignment_id FROM submissions " \
-           "WHERE user_id = '00e4208b3d1ddbf679c2f77c1f2322cb' ORDER BY user_id ASC"
+
+# my_query = "SELECT DISTINCT user_id, assignment_id FROM submissions " \
+#            "WHERE user_id = '00e4208b3d1ddbf679c2f77c1f2322cb' ORDER BY user_id ASC"
+# database = "esystant1920"
+# queryResult = queryDatabase(my_query, database)
+# byUser = groupByUser(queryResult)
+# testDict = testBase(byUser)
+# verificationDict = verificationBase(byUser)
+
+
+##################################################
+# Nu willen we gewoon een functie kunnen geven dat een query ( en de nodige informatie neemt als input) en het resultaat van de decision tree meegeeft.
+#   Dit wordt eventueel gedaan met verschillende hulpfuncties.
+#       Om dit te doen werken : 1e kolom user id , laatste 2 kolommen Prolog & Haskell Respectively.
+###################################################
+
+
+# 1e Functie: equivalent aan groupByUser maar we gaan 2 dictionaries maken. 1 voor de trees te bouwen , 1 met de punten.
+def groupByUserandGrades(results_from_query):
+    dataUserBase = {}
+    gradesUserBase = {}
+    for entry in results_from_query:
+        if entry[0] in dataUserBase:
+            templist = [entry[1:-2]]
+            secondtemplist = dataUserBase[entry[0]]
+            newList = secondtemplist.append(templist)
+            # myUserBase[entry[0]] =
+        else:
+            dataUserBase[entry[0]] = [[entry[1:-2]]]
+            gradesUserBase[entry[0]] = entry[-2:]
+
+    return (dataUserBase, gradesUserBase)
+
+
 database = "esystant1920"
-queryResult = queryDatabase(my_query, database)
-byUser = groupByUser(queryResult)
-testDict = testBase(byUser)
-verificationDict = verificationBase(byUser)
+queryResult = queryDatabase(my_tree_query, database)
+(datapoints,grades) = groupByUserandGrades(queryResult)
+testDict = testBase(datapoints)
 
 # clf = tree.DecisionTreeRegressor(max_depth=4)
 #
