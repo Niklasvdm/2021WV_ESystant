@@ -20,8 +20,8 @@ import Queries
 # Ook in deze file weer belangrijk dat we de naam van databases en passwoord matchen
 # Er is een 2e functie voor die reden.
 
-niklashost,niklasroot,niklaspassw = NiklasConnectivity()
-
+host,root,passw = NiklasConnectivity()
+#host,root,passw = MaxConnectivity()
 
 
 # https://stackoverflow.com/questions/12988351/split-a-dictionary-in-half
@@ -49,23 +49,28 @@ VERIFICATION_PERCENTAGE = 1 - TEST_PERCENTAGE
 
 
 
-#   Okay, we willen per eerste categorie een boom bouwen.
 #
 # input: dictionary van per user verschillende arrays met eigenschappen. Dit in een dictionary
 # output: Per categorie een boom op de overblijvende eigenschapper per user.
 # {USER:[[CATEGORY_0,_],[CATEGORY_1,_],...]}
 # CATEGORY_0 X [PROPERTY_0,PROPERTY_1,...] -> DECISION TREE_0 , CATEGORY_1 X [PROPERTY_0,PROPERTY_1,...] -> DECISION TREE_0
 #
-#   Dus een functie nodig om per categorie over alle set users een aparte set te maken, dit keer op categorie.
+#   For each category we want to build a tree. This is done with preparecategories and buildTrees
 #
+# NEXT: BUILD MEGATREE
+#       INPUT:
+#       OUTPUT:
+#
+#
+
 
 
 # Function that per Category, makes a dictionary with all of the user necessairy and a list with the necessairy grades
 #       REQUIREMENT: EERSTE PLAATS IN DICTIONARY USER IS CATEGORIE,LAATSTE PLAATS IS TAAL.
 #                       GRADESDICTIONARY KOMT OVEREEN MET [PUNT_PROLOG,PUNT_HASKELL]
-#       INPUT : { (USR : [[CAT_0,...,LANGUAGE],[CAT_1,...,LANGUAGE],...]) , .... }
+#       INPUT : { USER : [[CAT_0,...,LANGUAGE],[CAT_1,...,LANGUAGE],...]) , .... }
 #               { USER : [GRADE_PROLOG,GRADE_HASKELL],... }
-#       OUTPUT : { ( CATEGORY_0 : [ [ PROPERTY_0,PROPERTY_1,....],[PROPERTY_0,PROPERTY_1,...] ] ) , ( ...) , ....}
+#       OUTPUT : { ( CATEGORY_0 : [ [PROPERTY_0,PROPERTY_1,....],[PROPERTY_0,PROPERTY_1,...] ] ) , ( ...) , ....}
 #                { ( CATEGORY_0 : [ GRADE_0_0,GRADE_0_1,...] ) , ( CATEGORY_1 : [ GRADE_1_0,GRADE_1_1,...] ) , ... }
 #
 #
@@ -91,7 +96,7 @@ def prepareCategories(testDictionary,gradesDictionary):
 
 my_tree_query = Queries.getQuery02()
 database = "esystant1920"
-queryResult = get_query_database(niklashost,niklasroot,niklaspassw,database,my_tree_query)
+queryResult = get_query_database(host,root,passw,database,my_tree_query)
 (datapoints,grades) = groupByUserAndGrades(queryResult)
 (testDict,verificationDict) = splitBase(datapoints)
 (categoryUsers,categoryGrades)  = prepareCategories(testDict,grades)
@@ -102,12 +107,20 @@ queryResult = get_query_database(niklashost,niklasroot,niklaspassw,database,my_t
 #   OUTPUT: { CATEGORY_0 : DECISION_TREE_0  , CATEGORY_1 : DECISION_TREE_1  , ... }
 def buildTrees(DictionaryCategories,DictionaryGrades):
     decisionTrees = {}
-    clf = tree.DecisionTreeRegressor()
     for category in DictionaryCategories:
+        clf = tree.DecisionTreeRegressor()
         listValues = DictionaryCategories[category]
         listGrades = DictionaryGrades[category]
         decisionTrees[category] = clf.fit(listValues,listGrades)
     return decisionTrees
+
+# PURPOSE: Build megatree
+#
+#
+#
+def buildMegaTree():
+    return
+
 
 myDecisionTrees = buildTrees(categoryUsers,categoryGrades)
 
