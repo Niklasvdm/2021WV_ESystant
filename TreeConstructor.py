@@ -1,6 +1,5 @@
 from Database_Functions import NiklasConnectivity,create_database_connection
 from random import shuffle
-from Database_Functions import groupByUserAndGrades,groupByUser,get_query_database,NiklasConnectivity,MaxConnectivity
 from sklearn import tree
 import Queries
 

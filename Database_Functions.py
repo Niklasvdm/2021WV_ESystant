@@ -109,7 +109,7 @@ def create_database_connection(host_name, user_name, user_password, selected_dat
     return connection
 
 
-def query_database(localhost, root, password, database, query):
+def query_database_dataframe(localhost, root, password, database, query):
     db = create_database_connection(localhost, root, password, database)
     return read_sql(query, db)
 
@@ -138,7 +138,7 @@ def groupByUser(results_from_query):
 
 
 # # REQUIREMENT: QUERY MUST HAVE USER AS FIRST IN SELECT CLAUSE AND PROLOG & HASKELL SCORE AS LAST TWO COLUMNS
-# input: output from query having done a query or querydatabase function
+# input: output from a query or querydatabase function
 # ouput: a dictionary sorted by user and all results (CATEGORIES) that user has had.
 def groupByUserAndGrades(results_from_query):
     dataUserBase = {}
