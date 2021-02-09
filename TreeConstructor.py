@@ -1,4 +1,5 @@
 from Legacy_Files.BlobFileAnalysis import create_database_connection
+from random import shuffle
 
 my_tree_query = """SELECT 
     u.user_id,
@@ -22,6 +23,7 @@ FROM
         INNER JOIN
     grades AS g ON g.user_id = u.user_id
 GROUP BY user_id , category"""
+
 # POSSIBLE FUNCTIONS IN THIS FILE ARE:
 #
 # QUERYDATABASE
@@ -74,8 +76,8 @@ def query(localhost, root, password, database_name, query_text):
 
 
 # input: output from query having done a query or querydatabase function
-# ouput: a dictionary sorted by used and all results that used has had.
-# REQUIREMENT: QUERY MUST HAVE USER AS FIRST IN SELECT CLAUSE
+# ouput: a dictionary sorted by user and all results (CATEGORIES) that user has had.
+# REQUIREMENT: QUERY MUST HAVE USER_ID AS FIRST IN SELECT CLAUSE
 def groupByUser(results_from_query):
     myUserBase = {}
     for entry in results_from_query:
@@ -100,6 +102,14 @@ def testBase(d):
 def verificationBase(d):
     return dict(list(d.items())[int(len(d) * TEST_PERCENTAGE):])
 
+# #### TODO: DOCUMENATION
+#
+#
+#
+def splitBase(d):
+    temp = shuffle(list(d.items()))
+    return ( dict(temp[:int(len(d) * TEST_PERCENTAGE)]) , dict(temp[int(len(d) * TEST_PERCENTAGE):]) )
+
 
 TEST_PERCENTAGE = 0.9
 VERIFICATION_PERCENTAGE = 1 - TEST_PERCENTAGE
@@ -117,31 +127,58 @@ VERIFICATION_PERCENTAGE = 1 - TEST_PERCENTAGE
 ##################################################
 # Nu willen we gewoon een functie kunnen geven dat een query ( en de nodige informatie neemt als input) en het resultaat van de decision tree meegeeft.
 #   Dit wordt eventueel gedaan met verschillende hulpfuncties.
-#       Om dit te doen werken : 1e kolom user id , laatste 2 kolommen Prolog & Haskell Respectively.
+#       Om dit te doen werken : 1e kolom user id, 2e kolom per oefenzitting , laatste 2 kolommen Prolog & Haskell Respectively.
 ###################################################
 
 
+
+# input: output from query having done a query or querydatabase function
+# ouput: a dictionary sorted by user and all results (CATEGORIES) that user has had.
+# REQUIREMENT: QUERY MUST HAVE USER AS FIRST IN SELECT CLAUSE AND PROLOG & HASKELL SCORE AS LAST TWO COLUMNS
 # 1e Functie: equivalent aan groupByUser maar we gaan 2 dictionaries maken. 1 voor de trees te bouwen , 1 met de punten.
 def groupByUserandGrades(results_from_query):
     dataUserBase = {}
     gradesUserBase = {}
     for entry in results_from_query:
         if entry[0] in dataUserBase:
-            templist = [entry[1:-2]]
+            templist = list(entry[1:-2])
             secondtemplist = dataUserBase[entry[0]]
-            newList = secondtemplist.append(templist)
-            # myUserBase[entry[0]] =
+            secondtemplist.append(templist)
         else:
-            dataUserBase[entry[0]] = [[entry[1:-2]]]
-            gradesUserBase[entry[0]] = entry[-2:]
+            dataUserBase[entry[0]] = [list(entry[1:-2])]
+            gradesUserBase[entry[0]] = list(entry[-2:])
 
     return (dataUserBase, gradesUserBase)
+
 
 
 database = "esystant1920"
 queryResult = queryDatabase(my_tree_query, database)
 (datapoints,grades) = groupByUserandGrades(queryResult)
 testDict = testBase(datapoints)
+#   Okay, we willen per eerste categorie een boom bouwen.
+#
+# input: dictionary van per user verschillende arrays met eigenschappen. Dit in een dictionary
+# output: Per categorie een boom op de overblijvende eigenschapper per user.
+# {USER:[[CATEGORY_0,_],[CATEGORY_1,_],...]}
+# CATEGORY_0 X [PROPERTY_0,PROPERTY_1,...] -> DECISION TREE_0 , CATEGORY_1 X [PROPERTY_0,PROPERTY_1,...] -> DECISION TREE_0
+#
+#   Dus een functie nodig om per categorie over alle set users een aparte set te maken, dit keer op categorie.
+#       #1st -> Generieke functie die 2 dictionaries neemt als input, en die omzet naar
+
+
+
+
+# limit = 25
+# for i in testDict:
+#     for j in testDict[i]:
+#         for k in j:
+#             print(k)
+#             limit -= 1
+#     if limit == 0:
+#         break
+
+
 
 # clf = tree.DecisionTreeRegressor(max_depth=4)
 #

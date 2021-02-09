@@ -5,8 +5,6 @@ from mysql.connector import Error
 # Idee van deze file: functies schrijven dat ervoor zorgt dat wij makkelijk BLOB files kunnen analyseren.
 #
 #   FUNCTIES:
-#       CHECK_SERVER_CONNECTION
-#       CREATE_DATABASE_CONNECTION
 #       BYTETOOUTPUT
 #              input = een cursos.fetchall operatie met 1 file
 #               output = \ -> een print van die informatie geformateerd
@@ -33,37 +31,6 @@ from mysql.connector import Error
 #
 #
 #
-
-
-def check_server_connectivity(host_name, user_name, user_password):
-    connection = None
-    try:
-        connection = mysql.connector.connect(
-            host=host_name,
-            user=user_name,
-            passwd=user_password
-        )
-        print("MySQL Database connection successful")
-    except Error as err:
-        print(f"Error: '{err}'")
-
-    return connection
-
-
-def create_database_connection(host_name, user_name, user_password, selected_database):
-    connection = None
-    try:
-        connection = mysql.connector.connect(
-            host=host_name,
-            database='esystant1920',
-            user=user_name,
-            passwd=user_password
-        )
-        print("MySQL Database connection to", selected_database, "successfull")
-    except Error as err:
-        print(f"Error: '{err}'")
-
-    return connection
 
 
 def byteToOutput(mybytes):
@@ -107,7 +74,6 @@ def byteToLines(mybytes):
 
 
 def bytesToLines(mybytes):
-    # Waarom juist deze functie?
 
     multiplelines = []
     lines = []
@@ -174,12 +140,7 @@ def getResultsFromDataBase(query, database):
     return bytesToLines(result)
 
 
-def databaseToLines(localhost, root, password, database, query):
-    db = create_database_connection(localhost, root, password, database)
-    my_cursor = db.cursor()
-    my_cursor.execute(query)
-    result = my_cursor.fetchall()
-    return bytesToLines(result)
+
 
 # sql_prompt = "SELECT result_id,submission_id FROM results where result_id BETWEEN 41309 AND 41312 ;"
 # printMultipleLines(queryMultipleResultsToLines(sql_prompt))
