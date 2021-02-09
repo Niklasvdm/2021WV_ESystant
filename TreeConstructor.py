@@ -76,12 +76,12 @@ def prepareCategories(testDictionary,gradesDictionary,categories,categoriesAndLa
     for number in categories :  exercizeGradeDictionary[number] = []
     category_sets = [set(),set()] # TODO : pass documentatie aan
     for users in testDictionary: # ELKE USER HEEFT [[CAT_0,OPLEIDING_ID_0...,LANGUAGE],[CAT_1,OPLEIDING_ID_0...,LANGUAGE],...]
-        oplID = testDictionary[users][0][1]
+        oplID = testDictionary[users][0][0]
         length_properties = len(testDictionary[users][0]) - 3
         userSet = set()
         for user_list in testDictionary[users]:
             language = user_list[-1] % 2  # 1 voor haskell, 0 voor Prolog.
-            category_sets[language].add(user_list[0])
+            category_sets[int(language)].add(user_list[0])
             exercizeDictionary[user_list[0]].append(user_list[1:-1])
             userSet.add(user_list[0])
             remaining_categories = categories - userSet
@@ -89,7 +89,7 @@ def prepareCategories(testDictionary,gradesDictionary,categories,categoriesAndLa
             templist = [oplID] + [0 for _ in range(length_properties)]
             exercizeDictionary[i].append(templist)
         for [catergory,language] in categoriesAndLanguage:
-            exercizeGradeDictionary[catergory].append(gradesDictionary[users][language % 2])
+            exercizeGradeDictionary[catergory].append(gradesDictionary[users][int(language % 2)])
     #print(exercizeDictionary)
 
 
@@ -127,7 +127,8 @@ def buildTrees(DictionaryCategories,DictionaryGrades):
         listValues = DictionaryCategories[category]
         listGrades = DictionaryGrades[category]
 
-       # print (listValues)
+        print (len(listValues))
+        print(len(listGrades))
         decisionTrees[category] = clf.fit(listValues,listGrades)
     return decisionTrees
 
