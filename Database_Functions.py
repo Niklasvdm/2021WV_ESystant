@@ -18,7 +18,7 @@ from pandas import read_sql
 #               OUTPUT : NAME , ROOT , PASSWORD (x NIKLAS)
 #
 #
-#       ~ MaxsConnectivity =========================================== TODO =================
+#       ~ MaxConnectivity =========================================== TODO =================
 #               INPUT : /
 #               OUTPUT : NAME , ROOT , PASSWORD (x MAX)
 #

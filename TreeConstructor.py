@@ -1,46 +1,16 @@
 from Legacy_Files.BlobFileAnalysis import create_database_connection
 from random import shuffle
+from Database_Functions import groupByUserAndGrades,groupByUser,query_database,NiklasConnectivity
+from Queries import getQuery01
 
-my_tree_query = """SELECT 
-    u.user_id,
-    category,
-    SUM(nb_failed != 0) AS Failed_Submissions,
-    SUM(nb_failed = 0) AS Successfulll_Submissions,
-    SUM(r.style_result > '') AS amount_bad_style_submissions,
-    SUM(s.points_awarded) AS Points,
-    SUM(a.deadline * 10000 > s.timestamp) AS On_Time,
-    SUM(a.deadline * 10000 < s.timestamp) AS Too_Late,
-    score_prolog,
-    score_haskell
-FROM
-    submissions AS s
-        INNER JOIN
-    results AS r ON r.submission_id = s.submission_id
-        INNER JOIN
-    assignments AS a ON a.assignment_id = s.assignment_id
-        INNER JOIN
-    users AS u ON u.user_id = s.user_id
-        INNER JOIN
-    grades AS g ON g.user_id = u.user_id
-GROUP BY user_id , category"""
+my_tree_query = getQuery01()
 
-# POSSIBLE FUNCTIONS IN THIS FILE ARE:
+######## FUNCTIONS:
 #
-# QUERYDATABASE
-#       INPUT: query,database from which it comes. Returns normal results as seen in esystant
-#       OUTPUT: result from that query
-# QUERY
-#       INPUT: localhost,root,password,database,query
-# GROUPBYUSER
-#       INPUT: output from one of the afformentioned query functions
-#       OUTPUT: dictionary with per user, all of the data in a 2-D array. (so per user)
-# TESTBASE
-#       INPUT: Output from groupybyuser() call
-#       OUTPUT: the first TEST_PERCENTAGE Of the users and their respective information. (set to 0.9 normally)
-# VERIFICATIONBASE
-#       INPUT; Same as above
-#       OUTPUT: the other TEST_PERCENTAGE of the users.
+#   ~ splitBase
 #
+#           INPUT: Dictionary
+#           OUTPUT: (DICTIONARY_TEST,DICTIONARY_VERIFICATION)
 #
 
 # First thing we're going to do is just writing a function to fetch data. We write two: One given just a query and a
@@ -49,63 +19,14 @@ GROUP BY user_id , category"""
 # Ook in deze file weer belangrijk dat we de naam van databases en passwoord matchen
 # Er is een 2e functie voor die reden.
 
-niklashost = "localhost"
-niklasroot = "root"
-niklaspassw = ""
+niklashost,niklasroot,niklaspassw = NiklasConnectivity()
 
-
-# maxhost =
-# maxroot =
-# maxpassw =
-
-
-def queryDatabase(query_text, database_name):
-    db = create_database_connection("localhost", "root", "", database_name)
-    my_cursor = db.cursor()
-    my_cursor.execute(query_text)
-    result = my_cursor.fetchall()
-    return result
-
-
-def query(localhost, root, password, database_name, query_text):
-    db = create_database_connection(localhost, root, password, database_name)
-    my_cursor = db.cursor()
-    my_cursor.execute(query_text)
-    result = my_cursor.fetchall()
-    return result
-
-
-# input: output from query having done a query or querydatabase function
-# ouput: a dictionary sorted by user and all results (CATEGORIES) that user has had.
-# REQUIREMENT: QUERY MUST HAVE USER_ID AS FIRST IN SELECT CLAUSE
-def groupByUser(results_from_query):
-    myUserBase = {}
-    for entry in results_from_query:
-        if entry[0] in myUserBase:
-            templist = [entry[1:]]
-            secondtemplist = myUserBase[entry[0]]
-            newList = secondtemplist.append(templist)
-            # myUserBase[entry[0]] =
-        else:
-            myUserBase[entry[0]] = [[entry[1:]]]
-
-    return myUserBase
 
 
 # https://stackoverflow.com/questions/12988351/split-a-dictionary-in-half
-# Easy function. Just takes the first 90% Of the users.
-# For easy measure, change variable TEST_PERCENTAGE
-def testBase(d):
-    return dict(list(d.items())[:int(len(d) * TEST_PERCENTAGE)])
-
-
-def verificationBase(d):
-    return dict(list(d.items())[int(len(d) * TEST_PERCENTAGE):])
-
-# #### TODO: DOCUMENATION
-#
-#
-#
+# INPUT: DICTIONARY
+# OUTPUT: TUPLE (DICTIONARY_TEST,DICTIONARY_VERIFICATION)
+#       Function takes the dictionary and shuffles it randomly to produce shuffled result.
 def splitBase(d):
     temp = shuffle(list(d.items()))
     return ( dict(temp[:int(len(d) * TEST_PERCENTAGE)]) , dict(temp[int(len(d) * TEST_PERCENTAGE):]) )
@@ -113,15 +34,6 @@ def splitBase(d):
 
 TEST_PERCENTAGE = 0.9
 VERIFICATION_PERCENTAGE = 1 - TEST_PERCENTAGE
-
-
-# my_query = "SELECT DISTINCT user_id, assignment_id FROM submissions " \
-#            "WHERE user_id = '00e4208b3d1ddbf679c2f77c1f2322cb' ORDER BY user_id ASC"
-# database = "esystant1920"
-# queryResult = queryDatabase(my_query, database)
-# byUser = groupByUser(queryResult)
-# testDict = testBase(byUser)
-# verificationDict = verificationBase(byUser)
 
 
 ##################################################
@@ -132,30 +44,13 @@ VERIFICATION_PERCENTAGE = 1 - TEST_PERCENTAGE
 
 
 
-# input: output from query having done a query or querydatabase function
-# ouput: a dictionary sorted by user and all results (CATEGORIES) that user has had.
-# REQUIREMENT: QUERY MUST HAVE USER AS FIRST IN SELECT CLAUSE AND PROLOG & HASKELL SCORE AS LAST TWO COLUMNS
-# 1e Functie: equivalent aan groupByUser maar we gaan 2 dictionaries maken. 1 voor de trees te bouwen , 1 met de punten.
-def groupByUserandGrades(results_from_query):
-    dataUserBase = {}
-    gradesUserBase = {}
-    for entry in results_from_query:
-        if entry[0] in dataUserBase:
-            templist = list(entry[1:-2])
-            secondtemplist = dataUserBase[entry[0]]
-            secondtemplist.append(templist)
-        else:
-            dataUserBase[entry[0]] = [list(entry[1:-2])]
-            gradesUserBase[entry[0]] = list(entry[-2:])
-
-    return (dataUserBase, gradesUserBase)
-
 
 
 database = "esystant1920"
-queryResult = queryDatabase(my_tree_query, database)
-(datapoints,grades) = groupByUserandGrades(queryResult)
-testDict = testBase(datapoints)
+
+queryResult = query_database(niklashost,niklasroot,niklaspassw,database,my_tree_query)
+(datapoints,grades) = groupByUserAndGrades(queryResult)
+(testDict,veriricationDict) = splitBase(datapoints)
 #   Okay, we willen per eerste categorie een boom bouwen.
 #
 # input: dictionary van per user verschillende arrays met eigenschappen. Dit in een dictionary
