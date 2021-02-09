@@ -1,6 +1,6 @@
 from Database_Functions import NiklasConnectivity,create_database_connection
 from random import shuffle
-from Database_Functions import groupByUserAndGrades,groupByUser,get_query_database,NiklasConnectivity
+from Database_Functions import groupByUserAndGrades,groupByUser,get_query_database,NiklasConnectivity,MaxConnectivity
 from sklearn import tree
 import Queries
 
@@ -19,10 +19,6 @@ import Queries
 
 # Ook in deze file weer belangrijk dat we de naam van databases en passwoord matchen
 # Er is een 2e functie voor die reden.
-
-host,root,passw = NiklasConnectivity()
-#host,root,passw = MaxConnectivity()
-
 
 # https://stackoverflow.com/questions/12988351/split-a-dictionary-in-half
 # INPUT: DICTIONARY
@@ -77,29 +73,20 @@ VERIFICATION_PERCENTAGE = 1 - TEST_PERCENTAGE
 def prepareCategories(testDictionary,gradesDictionary):
     exercizeDictionary = {}
     exercizeGradeDictionary = {}
+    category_sets = [set(),set()]
     for users in testDictionary: # ELKE USER HEEFT [[CAT_0,...,LANGUAGE],[CAT_1,...,LANGUAGE],...]
-        for list in testDictionary[users]:
-            if list[0] in exercizeDictionary:
-                tempList = list[1:-1]
-                exercizeDictionary[list[0]].append(tempList)
-                language = list[-1]
-                language = language % 2 # 1 voor haskell, 0 voor Prolog.
+        for user_list in testDictionary[users]:
+            language = user_list[-1] % 2  # 1 voor haskell, 0 voor Prolog.
+            category_sets[language].add(user_list[0])
+            if user_list[0] in exercizeDictionary:
+                exercizeDictionary[user_list[0]].append(user_list[1:-1])
                 gradeStudent = gradesDictionary[users][language]
-                exercizeGradeDictionary[list[0]].append(gradeStudent)
+                exercizeGradeDictionary[user_list[0]].append(gradeStudent)
             else:
-                exercizeDictionary[list[0]] = [list[1:-1]] #Neem eerst alle nuttige informatie.
-                language = list[-1] # 1 voor haskell, 2 voor prolog
-                language = language % 2 # 1 voor haskell, 0 voor Prolog.
+                exercizeDictionary[user_list[0]] = [user_list[1:-1]] #Neem eerst alle nuttige informatie.
                 gradeStudent = gradesDictionary[users][language] # Neem de grade van de student.
-                exercizeGradeDictionary[list[0]] = [gradeStudent] #Stop die in de lijst.
+                exercizeGradeDictionary[user_list[0]] = [gradeStudent] #Stop die in de lijst.
     return(exercizeDictionary,exercizeGradeDictionary)
-
-my_tree_query = Queries.getQuery02()
-database = "esystant1920"
-queryResult = get_query_database(host,root,passw,database,my_tree_query)
-(datapoints,grades) = groupByUserAndGrades(queryResult)
-(testDict,verificationDict) = splitBase(datapoints)
-(categoryUsers,categoryGrades)  = prepareCategories(testDict,grades)
 
 # DOEL VAN BUILDTREES: we bouwen een boom per categorie met de nodige punten
 #   INPUT: { CATEGORY_0 : [ LIST_0_0 , LIST_0_1 , ... LIST_0,N0] , CATEGORY_1 : [ LIST_1_0 , LIST_1_1 , ... LIST_1,N1]  , .... }
@@ -118,11 +105,16 @@ def buildTrees(DictionaryCategories,DictionaryGrades):
 #
 #
 #
-def buildMegaTree():
+def buildMegaTree(decisionTrees, DictionaryCategories,DictionaryGrades):
+    clf = tree.DecisionTreeRegressor()
+
+    #listValues = DictionaryCategories[category]
+    #listGrades = DictionaryGrades[category]
+
     return
 
 
-myDecisionTrees = buildTrees(categoryUsers,categoryGrades)
+
 
 # DOEL VAN DEZE FUNCTIE: NAGAAN HOE GOED DE TREE IS.
 #       INPUT:  { CATEGORY_0 : DECISION_TREE_0  , CATEGORY_1 : DECISION_TREE_1  , ... }
@@ -130,7 +122,7 @@ myDecisionTrees = buildTrees(categoryUsers,categoryGrades)
 #
 #
 #
-checkTrees(DictionaryTrees)
+#checkTrees(DictionaryTrees)
 
 
 # limit = 25

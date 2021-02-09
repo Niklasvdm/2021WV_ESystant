@@ -36,7 +36,8 @@ def getQuery01():
 
 
 def getQuery02():
-    query = """SELECT 
+    query = """
+    SELECT 
         u.user_id,
         category,
         SUM(nb_failed != 0) AS Failed_Submissions,
@@ -58,7 +59,8 @@ def getQuery02():
         users AS u ON u.user_id = s.user_id
             INNER JOIN
         grades AS g ON g.user_id = u.user_id
-    GROUP BY user_id , category"""
+    GROUP BY user_id , category , language
+    """
     return query
 
 

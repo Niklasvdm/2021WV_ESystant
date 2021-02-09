@@ -73,10 +73,12 @@ niklashost = "localhost"
 niklasroot = "root"
 niklaspassw = ""
 
+def MaxConnectivity():
+    return (maxhost, maxroot, maxpassw)
 
-# maxhost =
-# maxroot =
-# maxpassw =
+maxhost = "localhost"
+maxroot = "root"
+maxpassw = "passwordroot"
 
 
 def check_server_connectivity(host_name, user_name, user_password):
