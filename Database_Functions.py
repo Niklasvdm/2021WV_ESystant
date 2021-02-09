@@ -153,3 +153,30 @@ def groupByUserAndGrades(results_from_query):
             gradesUserBase[entry[0]] = list(entry[-2:])
 
     return (dataUserBase, gradesUserBase)
+
+# # REQUIREMENT: QUERY MUST HAVE USER AS FIRST IN SELECT CLAUSE AND PROLOG & HASKELL SCORE AS LAST TWO COLUMNS
+# input: output from a query or querydatabase function
+# ouput: a dictionary sorted by user and all results (CATEGORIES) that user has had.
+#
+# TODO: Documentation
+#
+def groupByUserGradesAndCategories(results_from_query):
+    dataUserBase = {}
+    gradesUserBase = {}
+    allcategories = set()
+    allcategoriesWithLanguage = set()
+    
+    for entry in results_from_query.values.tolist():
+        allcategories.add(entry[1])
+        allcategoriesWithLanguage.add((entry[1],entry[-3]))
+        if entry[0] in dataUserBase:
+            templist = list(entry[1:-2])
+            secondtemplist = dataUserBase[entry[0]]
+            secondtemplist.append(templist)
+        else:
+            dataUserBase[entry[0]] = [list(entry[1:-2])]
+            gradesUserBase[entry[0]] = list(entry[-2:])
+
+    return (dataUserBase, gradesUserBase,allcategories,allcategoriesWithLanguage)
+
+

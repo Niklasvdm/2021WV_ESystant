@@ -63,40 +63,71 @@ VERIFICATION_PERCENTAGE = 1 - TEST_PERCENTAGE
 # Function that per Category, makes a dictionary with all of the user necessairy and a list with the necessairy grades
 #       REQUIREMENT: EERSTE PLAATS IN DICTIONARY USER IS CATEGORIE,LAATSTE PLAATS IS TAAL.
 #                       GRADESDICTIONARY KOMT OVEREEN MET [PUNT_PROLOG,PUNT_HASKELL]
-#       INPUT : { USER : [[CAT_0,...,LANGUAGE],[CAT_1,...,LANGUAGE],...]) , .... }
+#       INPUT : { USER : [[CAT_0,...,LANGUAGE],[CAT_1,...,LANGUAGE],...]] , .... }
 #               { USER : [GRADE_PROLOG,GRADE_HASKELL],... }
 #       OUTPUT : { ( CATEGORY_0 : [ [PROPERTY_0,PROPERTY_1,....],[PROPERTY_0,PROPERTY_1,...] ] ) , ( ...) , ....}
 #                { ( CATEGORY_0 : [ GRADE_0_0,GRADE_0_1,...] ) , ( CATEGORY_1 : [ GRADE_1_0,GRADE_1_1,...] ) , ... }
 #
 #
-def prepareCategories(testDictionary,gradesDictionary):
+def prepareCategories(testDictionary,gradesDictionary,categories,categoriesAndLanguage):
     exercizeDictionary = {}
+    for number in categories: exercizeDictionary[number] = []
     exercizeGradeDictionary = {}
-    category_sets = [set(),set()]
-    for users in testDictionary: # ELKE USER HEEFT [[CAT_0,...,LANGUAGE],[CAT_1,...,LANGUAGE],...]
+    for number in categories :  exercizeGradeDictionary[number] = []
+    category_sets = [set(),set()] # TODO : pass documentatie aan
+    for users in testDictionary: # ELKE USER HEEFT [[CAT_0,OPLEIDING_ID_0...,LANGUAGE],[CAT_1,OPLEIDING_ID_0...,LANGUAGE],...]
+        oplID = testDictionary[users][0][1]
+        length_properties = len(testDictionary[users][0]) - 3
+        userSet = set()
         for user_list in testDictionary[users]:
             language = user_list[-1] % 2  # 1 voor haskell, 0 voor Prolog.
             category_sets[language].add(user_list[0])
-            if user_list[0] in exercizeDictionary:
-                exercizeDictionary[user_list[0]].append(user_list[1:-1])
-                gradeStudent = gradesDictionary[users][language]
-                exercizeGradeDictionary[user_list[0]].append(gradeStudent)
-            else:
-                exercizeDictionary[user_list[0]] = [user_list[1:-1]] #Neem eerst alle nuttige informatie.
-                gradeStudent = gradesDictionary[users][language] # Neem de grade van de student.
-                exercizeGradeDictionary[user_list[0]] = [gradeStudent] #Stop die in de lijst.
-    return(exercizeDictionary,exercizeGradeDictionary)
+            exercizeDictionary[user_list[0]].append(user_list[1:-1])
+            userSet.add(user_list[0])
+            remaining_categories = categories - userSet
+        for i in remaining_categories:
+            templist = [oplID] + [0 for _ in range(length_properties)]
+            exercizeDictionary[i].append(templist)
+        for [catergory,language] in categoriesAndLanguage:
+            exercizeGradeDictionary[catergory].append(gradesDictionary[users][language % 2])
+    #print(exercizeDictionary)
+
+
+
+
+    return (exercizeDictionary,exercizeGradeDictionary,category_sets)
+#            else:
+#                exercizeDictionary[user_list[0]] = [user_list[1:-1]] #Neem eerst alle nuttige informatie.
+#                gradeStudent = gradesDictionary[users][language] # Neem de grade van de student.
+#                exercizeGradeDictionary[user_list[0]] = [gradeStudent] #Stop die in de lijst.
+
+#
+#
+"""
+[[[a,...],[b,...],[c,...],[d,...]],[[a,...],[b,...],[c,...],[d,...]]]
+"""
+#
+# CATEGORY
+#
+#
+#
+#
+
 
 # DOEL VAN BUILDTREES: we bouwen een boom per categorie met de nodige punten
 #   INPUT: { CATEGORY_0 : [ LIST_0_0 , LIST_0_1 , ... LIST_0,N0] , CATEGORY_1 : [ LIST_1_0 , LIST_1_1 , ... LIST_1,N1]  , .... }
 #          { CATEGORY_0 : [ GRADE_0_0 , GRADE_0_1 , ... GRADE_0,N0] , CATEGORY_1 : [ GRADE_1_0 , GRADE_1_1 , ... GRADE_1,N1]  , .... }
 #   OUTPUT: { CATEGORY_0 : DECISION_TREE_0  , CATEGORY_1 : DECISION_TREE_1  , ... }
 def buildTrees(DictionaryCategories,DictionaryGrades):
+
     decisionTrees = {}
-    for category in DictionaryCategories:
+    #for number in categories : decisionTrees[number] = None
+    for category in DictionaryCategories.keys():
         clf = tree.DecisionTreeRegressor()
         listValues = DictionaryCategories[category]
         listGrades = DictionaryGrades[category]
+
+       # print (listValues)
         decisionTrees[category] = clf.fit(listValues,listGrades)
     return decisionTrees
 
