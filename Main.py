@@ -38,7 +38,7 @@ myDecisionTrees = TreeConstructor.buildTrees(categoryUsers,categoryGrades)
 clf = tree.DecisionTreeRegressor(max_depth = 3)
 myMegaTree = clf.fit(megatreepredictions,megatreescores)
 
-(predictedVerification,actualVerification) = TreeConstructor.make_predictionswithgrades(testDict,grades,myDecisionTrees,categories)
+(predictedVerification,actualVerification) = TreeConstructor.make_predictionswithgrades(verificationDict,grades,myDecisionTrees,categories)
 predictedScores = myMegaTree.predict(predictedVerification)
 
 
@@ -74,7 +74,7 @@ predictedList = predictedScores.tolist()
 print(passFail(predictedList,actualVerification))
 
 def averageDeviation(prediction,actual):
-    return sum([prediction[x][y]-actual[x][y] for x in range(len(prediction)) for y in range(len(prediction[0]))])/(2*len(prediction))
+    return sum([abs(prediction[x][y]-actual[x][y]) for x in range(len(prediction)) for y in range(len(prediction[0]))])/(2*len(prediction))
 
 
 print(averageDeviation(predictedList,actualVerification))
