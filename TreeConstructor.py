@@ -84,7 +84,7 @@ def prepareCategories(testDictionary,gradesDictionary,categories,categoriesAndLa
             category_sets[int(language)].add(user_list[0])
             exercizeDictionary[user_list[0]].append(user_list[1:-1])
             userSet.add(user_list[0])
-            remaining_categories = categories - userSet
+        remaining_categories = categories - userSet
         for i in remaining_categories:
             templist = [oplID] + [0 for _ in range(length_properties)]
             exercizeDictionary[i].append(templist)
@@ -123,21 +123,58 @@ def buildTrees(DictionaryCategories,DictionaryGrades):
     decisionTrees = {}
     #for number in categories : decisionTrees[number] = None
     for category in DictionaryCategories.keys():
-        clf = tree.DecisionTreeRegressor()
+        clf = tree.DecisionTreeRegressor(max_depth=3)
         listValues = DictionaryCategories[category]
         listGrades = DictionaryGrades[category]
 
-        print (len(listValues))
-        print(len(listGrades))
+        #print (len(listValues))
+        #print(len(listGrades))
         decisionTrees[category] = clf.fit(listValues,listGrades)
     return decisionTrees
+
+
+# Purpose of next function -> Make a prediction with the testDict
+# input: Dictionary of users and properties , Dictionary of users and their scores , Dictionary with categories and trees, possible categories.
+#   { USER : [CATEGORY_ID, OPL_ID, ... , LANGUAGE] }
+#
+#
+# OUTPUT:
+#    [[PRED_0_0,PRED_0_1,....PRED_0_N],[PRED_1_0,PRED_1_1,....PRED_1_N] , .... [PRED_M_0,PRED_M_1,....PRED_M_N]] WHERE EACH DIFFERENT CATEGORY HAS A PREDICTION
+#    [[SCORE_PROLOG_0,SCORE_HASKELL_0],[SCORE_PROLOG_1,SCORE_HASKELL_1] , .... , [SCORE_PROLOG_M,SCORE_HASKELL_M] ]
+#
+def make_predictionswithgrades(userDictionary,gradeDictionary,categoryDictionary,categories):
+    outputPredictions = []
+    outputScores = []
+    categoryList = list(categories)
+    for user in userDictionary:
+        userScore = [0 for _ in range(len(categories))] # [ 0_0 , 0_1 , ... , 0_N ]
+        userSet = set()
+        opl_id = userDictionary[user][0][1]
+        lenList = len(userDictionary[user][0])
+        maxProperties = lenList - 3
+        for mylist in userDictionary[user]: #This will be a list [CAT_i , .... , LANGUAGE_i]
+            category = mylist[0]
+            userSet.add(category)
+            thisDecisionTree = categoryDictionary[category]
+            forDecisionTree = mylist[1:-1] # list [ PROPERTY_0, ... , PROPERTY_N]
+            treePrediction = thisDecisionTree.predict([forDecisionTree]) #This will be the prediction.
+            userScore[categoryList.index(category)] = treePrediction[0]
+        remainingSet = categories - userSet
+        for category in remainingSet:
+            forDecisionTree = [opl_id] + [0 for _ in range(maxProperties)]
+            treePrediction = categoryDictionary[category].predict([forDecisionTree])
+            userScore[categoryList.index(category)] = treePrediction[0]
+        outputPredictions.append(userScore)
+        outputScores.append(gradeDictionary[user])
+    return(outputPredictions,outputScores)
+
 
 # PURPOSE: Build megatree
 #
 #
 #
 def buildMegaTree(decisionTrees, DictionaryCategories,DictionaryGrades):
-    clf = tree.DecisionTreeRegressor()
+    clf = tree.DecisionTreeRegressor(max_depth=3)
 
     #listValues = DictionaryCategories[category]
     #listGrades = DictionaryGrades[category]

@@ -165,8 +165,8 @@ def groupByUserGradesAndCategories(results_from_query):
     gradesUserBase = {}
     allcategories = set()
     allcategoriesWithLanguage = set()
-    
-    for entry in results_from_query.values.tolist():
+    for entry in results_from_query:
+    #for entry in results_from_query.values.tolist():
         allcategories.add(entry[1])
         allcategoriesWithLanguage.add((entry[1],entry[-3]))
         if entry[0] in dataUserBase:

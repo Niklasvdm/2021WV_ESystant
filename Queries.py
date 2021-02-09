@@ -66,7 +66,7 @@ def getQuery02():
 def getQuery03():
     query = """
     SELECT 
-	u.user_id
+	u.user_id,
     category,
     opl_ID,
     SUM(nb_failed != 0) AS Failed_Submissions,
@@ -75,7 +75,7 @@ def getQuery03():
     SUM(s.points_awarded) AS Points,
     SUM(a.deadline * 10000 > s.timestamp) AS On_Time,
     SUM(a.deadline * 10000 < s.timestamp) AS Too_Late,
-    language
+    language,
     score_prolog,
     score_haskell
 FROM
