@@ -65,18 +65,19 @@ def getQuery02():
 
 def getQuery03():
     query = """
-SELECT 
-    opl_ID,
+    SELECT 
+	u.user_id
     category,
+    opl_ID,
     SUM(nb_failed != 0) AS Failed_Submissions,
     SUM(nb_failed = 0) AS Successfulll_Submissions,
     SUM(r.style_result > '') AS amount_bad_style_submissions,
     SUM(s.points_awarded) AS Points,
     SUM(a.deadline * 10000 > s.timestamp) AS On_Time,
     SUM(a.deadline * 10000 < s.timestamp) AS Too_Late,
+    language
     score_prolog,
-    score_haskell,
-    u.user_id
+    score_haskell
 FROM
     submissions AS s
         INNER JOIN
@@ -89,7 +90,7 @@ FROM
     grades AS g ON g.user_id = u.user_id
         INNER JOIN
     education_type AS e ON e.KULopl = u.KULopl
-GROUP BY u.user_id , category
+GROUP BY u.user_id , category, language
 ORDER BY a.category ASC
     """
     return query

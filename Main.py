@@ -8,7 +8,7 @@ import Database_Functions
 host, root, passw = Database_Functions.MaxConnectivity()
 
 
-my_tree_query = Queries.getQuery02()
+my_tree_query = Queries.getQuery03()
 database = "esystant1920"
 queryResult = Database_Functions.query_database_dataframe(host,root,passw,database,my_tree_query)
 print(queryResult)
