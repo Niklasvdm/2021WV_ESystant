@@ -1,9 +1,10 @@
-from Legacy_Files.BlobFileAnalysis import create_database_connection
+from Database_Functions import NiklasConnectivity,create_database_connection
 from random import shuffle
-from Database_Functions import groupByUserAndGrades,groupByUser,query_database,NiklasConnectivity
-from Queries import getQuery01
+from Database_Functions import groupByUserAndGrades,groupByUser,get_query_database,NiklasConnectivity
+from sklearn import tree
+import Queries
 
-my_tree_query = getQuery01()
+
 
 ######## FUNCTIONS:
 #
@@ -28,7 +29,8 @@ niklashost,niklasroot,niklaspassw = NiklasConnectivity()
 # OUTPUT: TUPLE (DICTIONARY_TEST,DICTIONARY_VERIFICATION)
 #       Function takes the dictionary and shuffles it randomly to produce shuffled result.
 def splitBase(d):
-    temp = shuffle(list(d.items()))
+    temp = (list(d.items()))
+    shuffle(temp)
     return ( dict(temp[:int(len(d) * TEST_PERCENTAGE)]) , dict(temp[int(len(d) * TEST_PERCENTAGE):]) )
 
 
@@ -46,11 +48,7 @@ VERIFICATION_PERCENTAGE = 1 - TEST_PERCENTAGE
 
 
 
-database = "esystant1920"
 
-queryResult = query_database(niklashost,niklasroot,niklaspassw,database,my_tree_query)
-(datapoints,grades) = groupByUserAndGrades(queryResult)
-(testDict,veriricationDict) = splitBase(datapoints)
 #   Okay, we willen per eerste categorie een boom bouwen.
 #
 # input: dictionary van per user verschillende arrays met eigenschappen. Dit in een dictionary
@@ -59,9 +57,67 @@ queryResult = query_database(niklashost,niklasroot,niklaspassw,database,my_tree_
 # CATEGORY_0 X [PROPERTY_0,PROPERTY_1,...] -> DECISION TREE_0 , CATEGORY_1 X [PROPERTY_0,PROPERTY_1,...] -> DECISION TREE_0
 #
 #   Dus een functie nodig om per categorie over alle set users een aparte set te maken, dit keer op categorie.
-#       #1st -> Generieke functie die 2 dictionaries neemt als input, en die omzet naar
+#
 
 
+# Function that per Category, makes a dictionary with all of the user necessairy and a list with the necessairy grades
+#       REQUIREMENT: EERSTE PLAATS IN DICTIONARY USER IS CATEGORIE,LAATSTE PLAATS IS TAAL.
+#                       GRADESDICTIONARY KOMT OVEREEN MET [PUNT_PROLOG,PUNT_HASKELL]
+#       INPUT : { (USR : [[CAT_0,...,LANGUAGE],[CAT_1,...,LANGUAGE],...]) , .... }
+#               { USER : [GRADE_PROLOG,GRADE_HASKELL],... }
+#       OUTPUT : { ( CATEGORY_0 : [ [ PROPERTY_0,PROPERTY_1,....],[PROPERTY_0,PROPERTY_1,...] ] ) , ( ...) , ....}
+#                { ( CATEGORY_0 : [ GRADE_0_0,GRADE_0_1,...] ) , ( CATEGORY_1 : [ GRADE_1_0,GRADE_1_1,...] ) , ... }
+#
+#
+def prepareCategories(testDictionary,gradesDictionary):
+    exercizeDictionary = {}
+    exercizeGradeDictionary = {}
+    for users in testDictionary: # ELKE USER HEEFT [[CAT_0,...,LANGUAGE],[CAT_1,...,LANGUAGE],...]
+        for list in testDictionary[users]:
+            if list[0] in exercizeDictionary:
+                tempList = list[1:-1]
+                exercizeDictionary[list[0]].append(tempList)
+                language = list[-1]
+                language = language % 2 # 1 voor haskell, 0 voor Prolog.
+                gradeStudent = gradesDictionary[users][language]
+                exercizeGradeDictionary[list[0]].append(gradeStudent)
+            else:
+                exercizeDictionary[list[0]] = [list[1:-1]] #Neem eerst alle nuttige informatie.
+                language = list[-1] # 1 voor haskell, 2 voor prolog
+                language = language % 2 # 1 voor haskell, 0 voor Prolog.
+                gradeStudent = gradesDictionary[users][language] # Neem de grade van de student.
+                exercizeGradeDictionary[list[0]] = [gradeStudent] #Stop die in de lijst.
+    return(exercizeDictionary,exercizeGradeDictionary)
+
+my_tree_query = Queries.getQuery02()
+database = "esystant1920"
+queryResult = get_query_database(niklashost,niklasroot,niklaspassw,database,my_tree_query)
+(datapoints,grades) = groupByUserAndGrades(queryResult)
+(testDict,verificationDict) = splitBase(datapoints)
+(categoryUsers,categoryGrades)  = prepareCategories(testDict,grades)
+
+# DOEL VAN BUILDTREES: we bouwen een boom per categorie met de nodige punten
+#   INPUT: { CATEGORY_0 : [ LIST_0_0 , LIST_0_1 , ... LIST_0,N0] , CATEGORY_1 : [ LIST_1_0 , LIST_1_1 , ... LIST_1,N1]  , .... }
+#          { CATEGORY_0 : [ GRADE_0_0 , GRADE_0_1 , ... GRADE_0,N0] , CATEGORY_1 : [ GRADE_1_0 , GRADE_1_1 , ... GRADE_1,N1]  , .... }
+#   OUTPUT: { CATEGORY_0 : DECISION_TREE_0  , CATEGORY_1 : DECISION_TREE_1  , ... }
+def buildTrees(DictionaryCategories,DictionaryGrades):
+    decisionTrees = {}
+    clf = tree.DecisionTreeRegressor()
+    for category in DictionaryCategories:
+        listValues = DictionaryCategories[category]
+        listGrades = DictionaryGrades[category]
+        decisionTrees[category] = clf.fit(listValues,listGrades)
+    return decisionTrees
+
+myDecisionTrees = buildTrees(categoryUsers,categoryGrades)
+
+# DOEL VAN DEZE FUNCTIE: NAGAAN HOE GOED DE TREE IS.
+#       INPUT:  { CATEGORY_0 : DECISION_TREE_0  , CATEGORY_1 : DECISION_TREE_1  , ... }
+#               { USER : [[CAT_0,...,LANGUAGE],[CAT_1,...,LANGUAGE],...]) , .... }
+#
+#
+#
+checkTrees(DictionaryTrees)
 
 
 # limit = 25

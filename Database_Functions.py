@@ -39,6 +39,10 @@ from pandas import read_sql
 #               INPUT: HOST_NAME , USER_NAME , USER_PASSWORD , DATABASE , QUERY
 #               OUTPUT: EXECUTED QUERY
 #
+#       ~  get_query_database
+#
+#               INPUT: HOST_NAME , USER_NAME , USER_PASSWORD , DATABASE , QUERY
+#               OUTPUT: EXECUTED QUERY WITH FETCHALL
 #
 #       ~ groupByUser
 #
@@ -106,6 +110,13 @@ def create_database_connection(host_name, user_name, user_password, selected_dat
 def query_database(localhost, root, password, database, query):
     db = create_database_connection(localhost, root, password, database)
     return read_sql(query, db)
+
+def get_query_database(localhost, root, password, database_name, query_text):
+    db = create_database_connection(localhost, root, password, database_name)
+    my_cursor = db.cursor()
+    my_cursor.execute(query_text)
+    result = my_cursor.fetchall()
+    return result
 
 
 # REQUIREMENT: QUERY MUST HAVE USER AS FIRST IN SELECT CLAUSE
