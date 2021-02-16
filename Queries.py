@@ -133,3 +133,10 @@ where timestamp < 202001310000
 GROUP BY u.user_id , category , language 
 ORDER BY a.category ASC"""
     return query
+
+
+def getQuery06():
+    query = """SELECT r.compile_errors
+    FROM results as r INNER JOIN submissions as s on s.submission_id = r.submission_id
+    where s.user_id = "0956c2c7071ae611c2f740e3685ed470" AND r.compile_errors > '' """
+    return query
