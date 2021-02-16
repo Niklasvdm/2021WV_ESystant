@@ -132,6 +132,19 @@ def buildTrees(DictionaryCategories,DictionaryGrades):
         decisionTrees[category] = clf.fit(listValues,listGrades)
     return decisionTrees
 
+def buildTrees2(dataframe_to_train):
+    decisionTrees = {}
+    for category in dataframe_to_train['category'].unique():
+        clf = tree.DecisionTreeRegressor(max_depth=3)
+        data_cat = dataframe_to_train.loc[dataframe_to_train['category'] == category].drop(['user_id', 'category'], axis = 1)
+        language = int(data_cat.iloc[0]['language'] % 2)  # 1 voor haskell, 0 voor Prolog.
+
+        listValues = data_cat.drop(['language', 'score_prolog','score_haskell'], axis = 1).values.tolist()
+        listGrades = [x[language] for x in data_cat[['score_prolog','score_haskell']].values.tolist()]
+
+        decisionTrees[category] = clf.fit(listValues, listGrades)
+    return decisionTrees
+
 
 # Purpose of next function -> Make a prediction with the testDict
 # input: Dictionary of users and properties , Dictionary of users and their scores , Dictionary with categories and trees, possible categories.
@@ -166,6 +179,30 @@ def make_predictionswithgrades(userDictionary,gradeDictionary,categoryDictionary
             userScore[categoryList.index(category)] = treePrediction[0]
         outputPredictions.append(userScore)
         outputScores.append(gradeDictionary[user])
+    return(outputPredictions,outputScores)
+
+
+def make_predictionswithgrades2(decision_trees,dataframe,categoryList):
+    outputPredictions = []
+    outputScores = []
+    for user in dataframe['user_id'].unique():
+        data_usr = dataframe.loc[dataframe['user_id'] == user].drop(['user_id'], axis = 1)
+        user_predictions = []
+        for category in categoryList:
+            data_cat = data_usr.loc[dataframe['category'] == category].drop(['category'], axis = 1)
+
+            if data_cat.empty:
+                user_predictions.append(0)
+            else:
+                data_list = data_cat.drop(['language', 'score_prolog', 'score_haskell'], axis=1).values.tolist()
+                if category in decision_trees.keys():
+                    prediction = decision_trees[category].predict(data_list)[0]
+                else:
+                    prediction = 0
+                user_predictions.append(prediction)
+
+        outputPredictions.append(user_predictions)
+        outputScores.append(data_usr[['score_prolog', 'score_haskell']].iloc[0].tolist())
     return(outputPredictions,outputScores)
 
 

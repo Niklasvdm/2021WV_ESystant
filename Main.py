@@ -3,6 +3,8 @@ from sklearn import tree
 import Database_Functions
 import Queries
 import TreeConstructor
+import pandas as pd
+import numpy as np
 
 # host,root,passw = Database_Functions.NiklasConnectivity()
 host, root, passw = Database_Functions.MaxConnectivity()
@@ -73,29 +75,53 @@ def run(amount_of_runs, host_name, root_name, passw_root, database_name, query):
     total_avg_deviation = 0
     length_prediction_list = 1
 
-    query_result = Database_Functions.get_query_database(host_name, root_name, passw_root, database_name, query)
-    data_points, grades, categories, categories_and_languages = Database_Functions.groupByUserGradesAndCategories(
-        query_result)
+    query_result = Database_Functions.query_database_dataframe(host_name, root_name, passw_root, database_name, query)
+   # data_points, grades, categories, categories_and_languages = Database_Functions.groupByUserGradesAndCategories(
+   #     query_result)
+
+    grades = query_result[['user_id','score_prolog','score_haskell']].drop_duplicates(subset='user_id')
+    grades.reset_index(drop=True, inplace=True)
+
+    categories = query_result['category'].unique().tolist()
+
+
 
     for x in range(amount_of_runs):
-        test_dict, verification_dict = TreeConstructor.splitBase(data_points)
+        #test_dict, verification_dict = TreeConstructor.splitBase(data_points)
+        verification_df = grades.sample(frac=0.1)
+        test_df = grades.drop(verification_df.index)
 
-        (categoryUsers, categoryGrades, splitCategories) = TreeConstructor.prepareCategories(test_dict, grades,
-                                                                                             categories,
-                                                                                             categories_and_languages)
+        test_users = set(test_df['user_id'].tolist())
+        #   verification_users = set(verification_df['user_id'].tolist())
 
-        my_decision_trees = TreeConstructor.buildTrees(categoryUsers, categoryGrades)
+        data_points_test_df = query_result.iloc[np.where(query_result.user_id.isin(test_users))]
+        data_points_verification_df = query_result.drop(data_points_test_df.index)
 
-        megatree_predictions, megatree_scores = TreeConstructor.make_predictionswithgrades(test_dict, grades,
-                                                                                           my_decision_trees,
-                                                                                           categories)
+        # print(data_points_test_df.to_string())
+
+        #(categoryUsers, categoryGrades, splitCategories) = TreeConstructor.prepareCategories(test_dict, grades,
+        #                                                                                     categories,
+        #                                                                                    categories_and_languages)
+
+
+        #my_decision_trees = TreeConstructor.buildTrees(categoryUsers, categoryGrades)
+
+
+        my_decision_trees = TreeConstructor.buildTrees2(data_points_test_df)
+
+        #megatree_predictions, megatree_scores = TreeConstructor.make_predictionswithgrades(test_dict, grades,
+        #                                                                                   my_decision_trees,
+        #                                                                                   categories)
+
+        megatree_predictions, megatree_scores = TreeConstructor.make_predictionswithgrades2(my_decision_trees,data_points_test_df,categories)
         clf = tree.DecisionTreeRegressor(max_depth=3)
         my_mega_tree = clf.fit(megatree_predictions, megatree_scores)
 
-        (predictedVerification, actualVerification) = TreeConstructor.make_predictionswithgrades(verification_dict,
-                                                                                                 grades,
-                                                                                                 my_decision_trees,
-                                                                                                 categories)
+        #(predictedVerification, actualVerification) = TreeConstructor.make_predictionswithgrades(verification_dict,
+        #                                                                                         grades,
+        #                                                                                         my_decision_trees,
+        #                                                                                         categories)
+        (predictedVerification, actualVerification) = TreeConstructor.make_predictionswithgrades2(my_decision_trees,data_points_verification_df,categories)
         predicted_list = my_mega_tree.predict(predictedVerification).tolist()
         pass_fail_result = pass_fail(predicted_list, actualVerification)
         total_avg_deviation += average_deviation(predicted_list, actualVerification)
@@ -108,7 +134,7 @@ def run(amount_of_runs, host_name, root_name, passw_root, database_name, query):
            total_avg_deviation / amount_of_runs, length_prediction_list
 
 
-run_results = run(10, host, root, passw, database, my_tree_query)
+run_results = run(100, host, root, passw, database, my_tree_query)
 print(str(run_results[0]) + " average total pass/fail correct, out of " + str(run_results[4]))
 print(str(run_results[1]) + " average prolog pass/fail correct, out of " + str(run_results[4]))
 print(str(run_results[2]) + " average haskell pass/fail correct, out of " + str(run_results[4]))
