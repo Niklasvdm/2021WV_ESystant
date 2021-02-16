@@ -109,12 +109,32 @@ def bytesToLines(mybytes):
         elif lastletters == '\\':
             mystr = mystr[-1:]
 
-        if mystr == '",), (b"':
+        if mystr == '",), (b"' or mystr == """",), (b'""" or mystr == """',), (b'""" or mystr == '''',), (b"''' or mystr == "',), (b'":
             multiplelines.append(lines)
             lines = []
             mystr = ''
+
+        if len(mystr) > 8:
+            if mystr[-8:] == '",), (b"' or mystr[-8:] == """",), (b'""" or mystr[-8:] == """',), (b'""" or mystr[-8:] == '''',), (b"''' or mystr[-8:] == "',), (b'":
+                multiplelines.append(lines)
+                lines = []
+                mystr = ''
+
     return multiplelines
 
+
+#       BYTESTOLINES:
+# INPUT: BYTE FROM MULTIPLE BLOB FILES
+# OUTPUT: [[STRING]]
+#
+def bytesToLines_(mybytes):
+    multiplelines = []
+    lines = []
+    mystr = ''
+    for i in mybytes:
+        print(i)
+
+    return multiplelines
 
 #       DATABASETOLINES
 # INPUT: DATABASE CONNECTIVITY THAT HAS OUTPUT MULTIPLTE BLOB FILES
