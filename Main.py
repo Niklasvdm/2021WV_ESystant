@@ -4,11 +4,11 @@ import Database_Functions
 from sklearn import tree
 
 
-host,root,passw = Database_Functions.NiklasConnectivity()
-#host, root, passw = Database_Functions.MaxConnectivity()
+#host,root,passw = Database_Functions.NiklasConnectivity()
+host, root, passw = Database_Functions.MaxConnectivity()
 
 
-my_tree_query = Queries.getQuery03()
+my_tree_query = Queries.getQuery05()
 database = "esystant1920"
 #queryResult = Database_Functions.query_database_dataframe(host,root,passw,database,my_tree_query)
 queryResult = Database_Functions.get_query_database(host,root,passw,database,my_tree_query)
@@ -71,10 +71,14 @@ def passFail(prediction,actual):
 
     return correctscores
 predictedList = predictedScores.tolist()
-print(passFail(predictedList,actualVerification))
+passfail = passFail(predictedList,actualVerification)
+print(passfail)
 
 def averageDeviation(prediction,actual):
     return sum([abs(prediction[x][y]-actual[x][y]) for x in range(len(prediction)) for y in range(len(prediction[0]))])/(2*len(prediction))
 
 
 print(averageDeviation(predictedList,actualVerification))
+print(sum([x[1] for x in passfail]), "True out of " + str(len(passfail)))
+print(sum([x[0][0] for x in passfail]), "True Prolog out of " + str(len(passfail)))
+print(sum([x[0][1] for x in passfail]), "True Haskell out of " + str(len(passfail)))
