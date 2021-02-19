@@ -3,78 +3,31 @@ import Database_Functions
 import  Blob_File_Analysis
 from ErrorFiles.PossibleErrorsProlog import *
 from ErrorFiles.PossibleErrorsHaskell import *
+from parse import *
 
-def main1():
-    myquery = Queries.getQuery06()
-    (host,root,passw) = Database_Functions.NiklasConnectivity()
-    result = Database_Functions.get_query_database(host,root,passw,"esystant1920",myquery)
-    lines = Blob_File_Analysis.bytesToLines(result)
-    #Blob_File_Analysis.printLines(lines)
-    return(lines)
-def main2():
-    #left_most_importance = -53
-    msg = getExampleErrorMessagesProlog03()
-    error_message_dictionary = {}
-    error_message_list = []
-    for i in msg:
-        str = i[-53:]
-        if str[:2] != 'Sy':
-            str = i[-36:]
-            if str[0] == ':':
-                str = i[-31:]
-            elif str[:2] == " S":
-                str = str[1:]
-            elif i[:7] == "Warning":
-                str = "Warning"
-            elif str[1] == ':' and str[3] == ':':
-                str = str[5:]
-            elif str[1] == ':':
-                str = str[3:]
-            elif i[:9] == "Traceback" or i[:9] == "Singleton":
-                str = i[:9]
-            elif i[:5] == "ERROR":
-                str = "Error, too complex to display"
-            else:
-                str = str
-
-
-        error_message_list.append(str)
-        print(str)
-
-    return error_message_list
-
-#
-# Template.hs:5:5:
-# Temmplate.
-#
-def main3():
-    a = 0
-    msg = main1()
-    for i in msg:
-        msg[a] = i[2:] #MOET DIT?
-        i = i[2:]
-        a += 1
-        if len(i) != 0:
-            i[0] = i[0][4:]
-            if i[0][:18] == "The type signature":
-                i = ["Type Signature"]
-        print(i)
-
-
-
-
-
-
-
-main3()
-
-
-#####
-# We need an analyser for error messages. In order to do this we'll need to make some assumptions.
-#   We'll write one function to analyse haskell & one for prolog.
-#       more Parsers incoming....
+#### PURPOSE:
+#           THIS FILE SERVES THE PURPOSE OF PARSING THE ERROR MESSAGES OF HASKELL & PROLOG
 #
 #
+#
+#
+#
+##################### FUNCTIONS:
+#
+#       ~ prologParser
+#
+#               REQUIREMENT: QUERY OUTPUT WITH MULTIPLE BLOB FILE CONVERTED USING Blob_File_Analysis.bytesToLines()
+#               INPUT: [ [PROLOG_OUTPUT_0],[PROLOG_OUTPUT_1],...,[PROLOG_OUTPUT_N] ]
+#               OUTPUT: [ [ ERROR_MESSAGE_0_0 , ERROR_MESSAGE_0_1 , ... , ERROR_MESSAGE_0_M ] , .... [ ERROR_MESSAGE_N_0 , ERROR_MESSAGE_N_1 , ... , ERROR_MESSAGE_N_K] ]
+#
+#       ~ haskellParser
+#
+#               REQUIREMENT: QUERY OUTPUT WITH MULTIPLE BLOB FILE CONVERTED USING Blob_File_Analysis.bytesToLines()
+#               INPUT: [ [HASKELL_OUTPUT_0],[HASKELL_OUTPUT_1],...,[HASKELL_OUTPUT_N] ]
+#               OUTPUT: [ [ ERROR_MESSAGE_0_0 , ERROR_MESSAGE_0_1 , ... , ERROR_MESSAGE_0_M ] , .... [ ERROR_MESSAGE_N_0 , ERROR_MESSAGE_N_1 , ... , ERROR_MESSAGE_N_K] ]
+#
+###############################################################
+
 
 
 # We can do this by seperating them and then calling each function individually.
@@ -85,11 +38,183 @@ main3()
 #   analyseHaskell(haskell_blob_files)
 
 
-#####
+###########################
+#               WE WANT THIS FUNCTION TO TAKE PROLOG COMPILE_ERROR FILES AND CONVERT THEM TO AN ARRAY WITH EACH ERROR BRIEFLY MENTIONED
+# -> Transorm data by putting it into lines. Funtionality done with ( Blob_File_Analysis.bytesToLines() )
+#
+# ###
+#   INPUT: [ [PROLOG_OUTPUT_0],[PROLOG_OUTPUT_1],...,[PROLOG_OUTPUT_N] ]
+#   OUTPUT : [ [ ERROR_MESSAGE_0_0 , ERROR_MESSAGE_0_1 , ... , ERROR_MESSAGE_0_M ] , .... [ ERROR_MESSAGE_N_0 , ERROR_MESSAGE_N_1 , ... , ERROR_MESSAGE_N_K] ]
 #
 #
+def prologParser(msg):
+    finalmsg = []
+    for i in msg:
+        if len(i) == 0:
+            i = ["NO TEXT"]
+        else:
+            sequence = []
+            for j in i:
+
+                # Syntax Error
+                result = search("Syntax Error",j,case_sensitive=False)
+                if result is not None:
+                    sequence.append("Syntax Error")
+
+                # Trying to modify procedure.
+                result = search("modify static",j,case_sensitive=False)
+                if result is not None:
+                    sequence.append("Trying to modify static procedure")
+
+                # Traceback.
+                result = search("traceback",j,case_sensitive=False)
+                if result is not None:
+                    sequence.append("Traceback error")
+
+                # Type error.
+                result = search("Type error",j,case_sensitive=False)
+                if result is not None:
+                    sequence.append("Type Error")
+
+                # Warning
+                result = search("warning",j,case_sensitive=False)
+                if result is not None:
+                    sequence.append("Warning")
+
+            if len(sequence) == 0:
+                finalmsg.append(["Unknown Error"])
+            else:
+                finalmsg.append(sequence)
+
+    return  finalmsg
+
+
+
+
+
+
+###########################
+#               WE WANT THIS FUNCTION TO TAKE HASKELL COMPILE_ERROR FILES AND CONVERT THEM TO AN ARRAY WITH EACH ERROR BRIEFLY MENTIONED
+# -> Transorm data by putting it into lines. Funtionality done with ( Blob_File_Analysis.bytesToLines() )
 #
-#def prologParser(prolog_blob_files):
+# ###
+#   INPUT: [ [HASKELL_OUTPUT_0],[HASKELL_OUTPUT_1],...,[HASKELL_OUTPUT_N] ]
+#   OUTPUT : [ [ ERROR_MESSAGE_0_0 , ERROR_MESSAGE_0_1 , ... , ERROR_MESSAGE_0_M ] , .... [ ERROR_MESSAGE_N_0 , ERROR_MESSAGE_N_1 , ... , ERROR_MESSAGE_N_K] ]
+#
+#
+def haskellParser(msg):
+    finalmsg = []
+    for i in msg:
+        i = i[2:]
+        if len(i) == 0:
+            i = ['NO TEXT']
+        elif len(i) != 0:
+            sequence = []
+            for j in i:
+
+                # The Type Signature was wrong
+                result = search("The type signature",j,case_sensitive=False)
+                if result is not None:
+                    sequence.append("The Type Signature was wrong")
+
+                # Variable not in scope
+                result = search("Not in scope",j,case_sensitive=False)
+                if result is not None:
+                    sequence.append("Variable not in scope")
+
+                # Expected type not met
+                result = search("expected type",j,case_sensitive=False)
+                if result is not None:
+                    sequence.append("Expected type not met")
+
+                # Problem with argument(s)
+                result = search("argument",j,case_sensitive=False)
+                if result is not None:
+                    sequence.append("Problem with argument(s)")
+
+                # Function not in scope
+                result = search("Not in scope",j,case_sensitive=False)
+                if result is not None:
+                    sequence.append("Function not in scope")
+
+                # Function is not the correct type
+                result = search("Derived Instance", j, case_sensitive=False)
+                if result is not None:
+                    sequence.append("Function is not the correct type")
+
+                # Parse error occured
+                result = search("parse", j, case_sensitive=False)
+                if result is not None:
+                    sequence.append("Parse error occured")
+
+                # Instance error
+                result = search("instance", j, case_sensitive=False)
+                if result is not None:
+                    sequence.append("Instance error")
+
+                # Function missing
+                result = search("No explicit implementation", j, case_sensitive=False)
+                if result is not None:
+                    sequence.append("Function missing")
+
+                # Multiple Declarations
+                result = search("Multiple Declarations", j, case_sensitive=False)
+                if result is not None:
+                    sequence.append("Multiple Declarations")
+
+                # Syntax Error
+                result = search("Syntax error", j, case_sensitive=False)
+                if result is not None:
+                    sequence.append("Syntax Error")
+
+                # Pattern Binding error
+                result = search("Pattern binding", j, case_sensitive=False)
+                if result is not None:
+                    sequence.append("Pattern Binding error")
+
+                # Conflicting definitions
+                result = search("conflicting definitions", j, case_sensitive=False)
+                if result is not None:
+                    sequence.append("Conflicting definitions")
+
+                # Module not loaded in
+                result = search("find module", j, case_sensitive=False)
+                if result is not None:
+                    sequence.append("Module not loaded in")
+
+                # Error with pattern matching
+                result = search("pattern match", j, case_sensitive=False)
+                if result is not None:
+                    sequence.append("Error with pattern matching")
+
+                # Lexical Error
+                result = search("lexical error", j, case_sensitive=False)
+                if result is not None:
+                    sequence.append("Lexical Error")
+
+                # operator Error
+                result = search("operator", j, case_sensitive=False)
+                if result is not None:
+                    sequence.append("operator Error")
+
+                # File name Error
+                result = search("File name", j, case_sensitive=False)
+                if result is not None:
+                    sequence.append("File name Error")
+
+
+            if len(sequence) != 0:
+                finalmsg.append(sequence)
+            # Possible -> Unknown Error.
+            else:
+                finalmsg.append("Unknown Error")
+    return finalmsg
+
+
+
+
+
+
 
 
 

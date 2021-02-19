@@ -140,3 +140,9 @@ def getQuery06():
     FROM results as r INNER JOIN submissions as s on s.submission_id = r.submission_id
     where s.user_id = "0956c2c7071ae611c2f740e3685ed470" AND r.compile_errors > '' """
     return query
+
+def getQuery07():
+    msg = """SELECT r.compile_errors
+FROM results as r INNER JOIN submissions as s on r.submission_id = s.submission_id INNER JOIN assignments as a on a.assignment_id = s.assignment_id
+WHERE a.language = 2 AND s.user_id = "a706bb348b2a0c23e35ae11e4d68fc17" """
+    return msg
