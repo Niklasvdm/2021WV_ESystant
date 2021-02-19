@@ -97,7 +97,7 @@ def run(amount_of_runs, host_name, root_name, passw_root, database_name, query):
         data_points_verification_df = query_result.drop(data_points_training_df.index)
         # we drop the selected training data to form the verification data
 
-        my_decision_trees = TreeConstructor.buildTrees_with_dataframe(data_points_training_df)
+        my_decision_trees = TreeConstructor.build_trees_with_dataframe(data_points_training_df)
         # this function returns a dictionary containing the trained decision-trees having the categories as key.
 
         mega_tree_predictions, mega_tree_actual_scores = TreeConstructor.make_predictions_with_grades_in_df(
