@@ -1,139 +1,132 @@
-import  Queries
-import Database_Functions
-import  Blob_File_Analysis
-from ErrorFiles.PossibleErrorsProlog import *
-from ErrorFiles.PossibleErrorsHaskell import *
 from parse import *
 
-#### PURPOSE:
+
+########################################################################################################################
 #           THIS FILE SERVES THE PURPOSE OF PARSING THE ERROR MESSAGES OF HASKELL & PROLOG
-#
-#
-#
-#
-#
-##################### FUNCTIONS:
+########################################################################################################################
+#   FUNCTIONS:
 #
 #       ~ prologParser
 #
 #               REQUIREMENT: QUERY OUTPUT WITH MULTIPLE BLOB FILE CONVERTED USING Blob_File_Analysis.bytesToLines()
 #               INPUT: [ [PROLOG_OUTPUT_0],[PROLOG_OUTPUT_1],...,[PROLOG_OUTPUT_N] ]
-#               OUTPUT: [ [ ERROR_MESSAGE_0_0 , ERROR_MESSAGE_0_1 , ... , ERROR_MESSAGE_0_M ] , .... [ ERROR_MESSAGE_N_0 , ERROR_MESSAGE_N_1 , ... , ERROR_MESSAGE_N_K] ]
+#               OUTPUT: [ [ ERROR_MESSAGE_0_0 , ERROR_MESSAGE_0_1 , ... , ERROR_MESSAGE_0_M ] , ....
+#               [ ERROR_MESSAGE_N_0 , ERROR_MESSAGE_N_1 , ... , ERROR_MESSAGE_N_K] ]
 #
 #       ~ haskellParser
 #
 #               REQUIREMENT: QUERY OUTPUT WITH MULTIPLE BLOB FILE CONVERTED USING Blob_File_Analysis.bytesToLines()
 #               INPUT: [ [HASKELL_OUTPUT_0],[HASKELL_OUTPUT_1],...,[HASKELL_OUTPUT_N] ]
-#               OUTPUT: [ [ ERROR_MESSAGE_0_0 , ERROR_MESSAGE_0_1 , ... , ERROR_MESSAGE_0_M ] , .... [ ERROR_MESSAGE_N_0 , ERROR_MESSAGE_N_1 , ... , ERROR_MESSAGE_N_K] ]
+#               OUTPUT: [ [ ERROR_MESSAGE_0_0 , ERROR_MESSAGE_0_1 , ... , ERROR_MESSAGE_0_M ] , ....
+#               [ ERROR_MESSAGE_N_0 , ERROR_MESSAGE_N_1 , ... , ERROR_MESSAGE_N_K] ]
 #
-###############################################################
-
+########################################################################################################################
 
 
 # We can do this by seperating them and then calling each function individually.
 #
-#def anaylser(.blob_files):
+# def anaylser(.blob_files):
 #   (haskell_blob_files,prolog_blob_files) = seperateBlobFiles(.blob_files)
 #   analyseProlog(prolog_blob_files)
 #   analyseHaskell(haskell_blob_files)
 
 
-###########################
-#               WE WANT THIS FUNCTION TO TAKE PROLOG COMPILE_ERROR FILES AND CONVERT THEM TO AN ARRAY WITH EACH ERROR BRIEFLY MENTIONED
+########################################################################################################################
+#               WE WANT THIS FUNCTION TO TAKE PROLOG COMPILE_ERROR FILES AND CONVERT THEM TO AN ARRAY WITH EACH ERROR
+#               BRIEFLY MENTIONED
 # -> Transorm data by putting it into lines. Funtionality done with ( Blob_File_Analysis.bytesToLines() )
 #
 # ###
 #   INPUT: [ [PROLOG_OUTPUT_0],[PROLOG_OUTPUT_1],...,[PROLOG_OUTPUT_N] ]
-#   OUTPUT : [ [ ERROR_MESSAGE_0_0 , ERROR_MESSAGE_0_1 , ... , ERROR_MESSAGE_0_M ] , .... [ ERROR_MESSAGE_N_0 , ERROR_MESSAGE_N_1 , ... , ERROR_MESSAGE_N_K] ]
+#   OUTPUT : [ [ ERROR_MESSAGE_0_0 , ERROR_MESSAGE_0_1 , ... , ERROR_MESSAGE_0_M ] , ....
+#   [ ERROR_MESSAGE_N_0 , ERROR_MESSAGE_N_1 , ... , ERROR_MESSAGE_N_K] ]
 #
 #
-def prologParser(msg):
-    finalmsg = []
+def prolog_parser(msg):
+    final_message = []
     for i in msg:
         if len(i) == 0:
-            i = ["NO TEXT"]
+            i = ["NO TEXT"] # todo je gebruikt i dan ook niet meer. Gewoon de elif if maken zou volgens mij genoeg zijn?
         else:
             sequence = []
             for j in i:
 
                 # Syntax Error
-                result = search("Syntax Error",j,case_sensitive=False)
+                result = search("Syntax Error", j, case_sensitive=False)
                 if result is not None:
                     sequence.append("Syntax Error")
 
                 # Trying to modify procedure.
-                result = search("modify static",j,case_sensitive=False)
+                result = search("modify static", j, case_sensitive=False)
                 if result is not None:
                     sequence.append("Trying to modify static procedure")
 
                 # Traceback.
-                result = search("traceback",j,case_sensitive=False)
+                result = search("traceback", j, case_sensitive=False)
                 if result is not None:
                     sequence.append("Traceback error")
 
                 # Type error.
-                result = search("Type error",j,case_sensitive=False)
+                result = search("Type error", j, case_sensitive=False)
                 if result is not None:
                     sequence.append("Type Error")
 
                 # Warning
-                result = search("warning",j,case_sensitive=False)
+                result = search("warning", j, case_sensitive=False)
                 if result is not None:
                     sequence.append("Warning")
 
             if len(sequence) == 0:
-                finalmsg.append(["Unknown Error"])
+                final_message.append(["Unknown Error"])
             else:
-                finalmsg.append(sequence)
+                final_message.append(sequence)
 
-    return  finalmsg
-
-
+    return final_message
 
 
-
-
-###########################
-#               WE WANT THIS FUNCTION TO TAKE HASKELL COMPILE_ERROR FILES AND CONVERT THEM TO AN ARRAY WITH EACH ERROR BRIEFLY MENTIONED
+########################################################################################################################
+#               WE WANT THIS FUNCTION TO TAKE HASKELL COMPILE_ERROR FILES AND CONVERT THEM TO AN ARRAY WITH EACH ERROR
+#               BRIEFLY MENTIONED
 # -> Transorm data by putting it into lines. Funtionality done with ( Blob_File_Analysis.bytesToLines() )
 #
 # ###
 #   INPUT: [ [HASKELL_OUTPUT_0],[HASKELL_OUTPUT_1],...,[HASKELL_OUTPUT_N] ]
-#   OUTPUT : [ [ ERROR_MESSAGE_0_0 , ERROR_MESSAGE_0_1 , ... , ERROR_MESSAGE_0_M ] , .... [ ERROR_MESSAGE_N_0 , ERROR_MESSAGE_N_1 , ... , ERROR_MESSAGE_N_K] ]
+#   OUTPUT : [ [ ERROR_MESSAGE_0_0 , ERROR_MESSAGE_0_1 , ... , ERROR_MESSAGE_0_M ] , ....
+#   [ ERROR_MESSAGE_N_0 , ERROR_MESSAGE_N_1 , ... , ERROR_MESSAGE_N_K] ]
 #
 #
-def haskellParser(msg):
-    finalmsg = []
+def haskell_parser(msg):
+    final_message = []
     for i in msg:
         i = i[2:]
         if len(i) == 0:
-            i = ['NO TEXT']
+            i = ['NO TEXT'] # todo je gebruikt i dan ook niet meer. Gewoon de elif if maken zou volgens mij genoeg zijn?
         elif len(i) != 0:
             sequence = []
             for j in i:
 
                 # The Type Signature was wrong
-                result = search("The type signature",j,case_sensitive=False)
+                result = search("The type signature", j, case_sensitive=False)
                 if result is not None:
                     sequence.append("The Type Signature was wrong")
 
                 # Variable not in scope
-                result = search("Not in scope",j,case_sensitive=False)
+                result = search("Not in scope", j, case_sensitive=False)
                 if result is not None:
                     sequence.append("Variable not in scope")
 
                 # Expected type not met
-                result = search("expected type",j,case_sensitive=False)
+                result = search("expected type", j, case_sensitive=False)
                 if result is not None:
                     sequence.append("Expected type not met")
 
                 # Problem with argument(s)
-                result = search("argument",j,case_sensitive=False)
+                result = search("argument", j, case_sensitive=False)
                 if result is not None:
                     sequence.append("Problem with argument(s)")
 
                 # Function not in scope
-                result = search("Not in scope",j,case_sensitive=False)
+                result = search("Not in scope", j, case_sensitive=False)
                 if result is not None:
                     sequence.append("Function not in scope")
 
@@ -202,22 +195,9 @@ def haskellParser(msg):
                 if result is not None:
                     sequence.append("File name Error")
 
-
             if len(sequence) != 0:
-                finalmsg.append(sequence)
+                final_message.append(sequence)
             # Possible -> Unknown Error.
             else:
-                finalmsg.append("Unknown Error")
-    return finalmsg
-
-
-
-
-
-
-
-
-
-
-
-
+                final_message.append("Unknown Error")
+    return final_message

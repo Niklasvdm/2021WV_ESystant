@@ -5,10 +5,46 @@ import Database_Functions
 import Queries
 import TreeConstructor
 
+########################################################################################################################
+#           THIS FILE SERVES THE PURPOSE OF RUNNING THE MAIN EXPERIMENT
+########################################################################################################################
+#   FUNCTIONS:
+#
+#       ~ pass_fail:
+#           evaluation of the made predictions
+#           INPUT:  prediction: a list containing lists of two predictions.
+#                   actual: a list with the same length and structure as prediction, but with the actual correct data.
+#           OUTPUT: A list of lists containing booleans and other lists with the structure
+#                   [[[Bp,Bh],Bt],[[Bp,Bh],Bt],...], where B is a boolean showing that the prediction and actual result
+#                   are both over or both under the required threshold of 5/10
+#
+#
+#       ~ average_deviation:
+#           calculates the average deviation from the correct scores
+#           INPUT:  prediction: a list containing lists of two predictions.
+#                   actual: a list with the same length and structure as prediction, but with the actual correct data.
+#           OUTPUT: the average deviation of type float of all numbers
+#
+#
+#       ~ run:
+#           runs the experiment x times
+#           INPUT:  amount_of_runs: the amount of times you want to run the experiment, the variables that are
+#                                   determined by the experiment are averaged.
+#                   host_name: the name of the host used in connecting to the sql-server as a string.
+#                   root_name: the name of the root-profile used in connecting to the sql-server as a string.
+#                   database_name: the name of the database used in connecting to the sql-server as a string.
+#                   query: the SQL-query as a string.
+#           OUTPUT: - the average of correctly predicted results for both languages combined of all runs
+#                   - the average of correctly predicted results for prolog of all runs
+#                   - the average of correctly predicted results for haskell of all runs
+#                   - the average deviation of all runs
+#                   - the amount of predictions that were made
+########################################################################################################################
+
 # host,root,passw = Database_Functions.NiklasConnectivity()
 host, root, passw = Database_Functions.MaxConnectivity()
 
-my_tree_query = Queries.getQuery05()  # A SQL-querry in string
+my_tree_query = Queries.get_query_05()  # A SQL-querry in string
 database = "esystant1920"  # The database that will be used
 
 
@@ -19,12 +55,12 @@ database = "esystant1920"  # The database that will be used
 #   the second showing if the prediction for haskell was correct. The second element of the list is if the overall score
 #   was correct. This will be done for each prediction. The returned list will thus be [[[Bp,Bh],Bt],[[Bp,Bh],Bt],...]
 #   INPUT:  prediction: a list containing lists of two predictions.
-#           actual: a list with the same length and stucture as prediction, but with the actual correct data.
+#           actual: a list with the same length and structure as prediction, but with the actual correct data.
 #   OUTPUT: A list of lists containing booleans and other lists with the structure [[[Bp,Bh],Bt],[[Bp,Bh],Bt],...],
 #           where B is a boolean showing that the prediction and actual result are both over or both under the required
 #           threshold of 5/10
 def pass_fail(prediction, actual):
-    correctscores = []
+    correct_scores = []
     for i in range(len(prediction)):
         result = [True, True]
         result_both = True
@@ -39,9 +75,9 @@ def pass_fail(prediction, actual):
         if ((prediction[i][0] + prediction[i][1] < 10) and (actual[i][0] + actual[i][1] > 10)
                 or ((prediction[i][0] + prediction[i][1] > 10) and (actual[i][0] + actual[i][1] < 10))):
             result_both = False
-        correctscores.append([result, result_both])
+        correct_scores.append([result, result_both])
 
-    return correctscores
+    return correct_scores
 
 
 #   AVERAGE_DEVIATION
@@ -82,9 +118,6 @@ def run(amount_of_runs, host_name, root_name, passw_root, database_name, query):
     # this is a dataframe with all user_id's and all scores
     grades.reset_index(drop=True, inplace=True)  # we reset the number index of the dataframe (purely cosmetics)
 
-    categories = query_result['category'].unique().tolist()
-    # makes a list of all unique categories for which there are submissions
-
     for x in range(amount_of_runs):  # in this loop the experiment gets repeated
         print("run number " + str(x))
         verification_df = grades.sample(frac=0.1)  # this is a random selection of 10% of the dataframe
@@ -101,7 +134,7 @@ def run(amount_of_runs, host_name, root_name, passw_root, database_name, query):
         # this function returns a dictionary containing the trained decision-trees having the categories as key.
 
         mega_tree_predictions, mega_tree_actual_scores = TreeConstructor.make_predictions_with_grades_in_df(
-            my_decision_trees, data_points_training_df, categories)
+            my_decision_trees, data_points_training_df)
         #  this function returns two lists containing lists of grades in float. Predictions and Actual grades to compare
 
         combining_tree = tree.DecisionTreeRegressor(max_depth=3)
@@ -109,7 +142,7 @@ def run(amount_of_runs, host_name, root_name, passw_root, database_name, query):
         # we train a tree that learns how trustworthy predictions are for each category
 
         predicted_verification, actual_verification = TreeConstructor.make_predictions_with_grades_in_df(
-            my_decision_trees, data_points_verification_df, categories)
+            my_decision_trees, data_points_verification_df)
         # here we actually predict unseen data and also return the actual grades so we can compare later
 
         predicted_list = my_mega_tree.predict(predicted_verification).tolist()
@@ -120,14 +153,15 @@ def run(amount_of_runs, host_name, root_name, passw_root, database_name, query):
         total_true += sum([x[1] for x in pass_fail_result])
         total_prolog += sum([x[0][0] for x in pass_fail_result])
         total_haskell += sum([x[0][1] for x in pass_fail_result])
-        # we add all the parameters because at the end we will devide it by the total amount of runs
+        # we add all the parameters because at the end we will divide it by the total amount of runs
         if length_prediction_list != len(pass_fail_result):
             length_prediction_list = len(pass_fail_result)
-    return total_true / amount_of_runs, total_prolog / amount_of_runs, total_haskell / amount_of_runs, \
-           total_avg_deviation / amount_of_runs, length_prediction_list
+    return [total_true / amount_of_runs, total_prolog / amount_of_runs, total_haskell / amount_of_runs,
+            total_avg_deviation / amount_of_runs, length_prediction_list]
 
 
-run_results = run(200, host, root, passw, database, my_tree_query)
+# Here we call the needed functions to initiate the experiment
+run_results = run(10, host, root, passw, database, my_tree_query)
 print(str(run_results[0]) + " average total pass/fail correct, out of " + str(run_results[4]))
 print(str(run_results[1]) + " average prolog pass/fail correct, out of " + str(run_results[4]))
 print(str(run_results[2]) + " average haskell pass/fail correct, out of " + str(run_results[4]))

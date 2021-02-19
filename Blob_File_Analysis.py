@@ -1,14 +1,11 @@
 from Database_Functions import create_database_connection
 
-#### PURPOSE:
+
+########################################################################################################################
 #           THIS FILE SERVES THE PURPOSE OF ANALYSING BLOB FILES.
 #           THIS INCLUDES READING THE BLOB FILES AND CLEANING IT INTO READABLE PIECS
-#
-#
-#
-#
-#
-##################### FUNCTIONS:
+########################################################################################################################
+#   FUNCTIONS:
 #
 #       ~ byteToLines
 #
@@ -43,9 +40,7 @@ from Database_Functions import create_database_connection
 #
 #               INPUT: lines from bytesToLines() function
 #               OUTPUT: /
-###############################################################
-
-
+########################################################################################################################
 
 
 #       BYTETOLINES:
@@ -109,13 +104,15 @@ def bytesToLines(mybytes):
         elif lastletters == '\\':
             mystr = mystr[-1:]
 
-        if mystr == '",), (b"' or mystr == """",), (b'""" or mystr == """',), (b'""" or mystr == '''',), (b"''' or mystr == "',), (b'":
+        if mystr == '",), (b"' or mystr == """",), (b'""" or mystr == """',), (b'""" or mystr == '''',), 
+        (b"''' or mystr == "',), (b'":
             multiplelines.append(lines)
             lines = []
             mystr = ''
 
         if len(mystr) > 8:
-            if mystr[-8:] == '",), (b"' or mystr[-8:] == """",), (b'""" or mystr[-8:] == """',), (b'""" or mystr[-8:] == '''',), (b"''' or mystr[-8:] == "',), (b'":
+            if mystr[-8:] == '",), (b"' or mystr[-8:] == """",), (b'""" or mystr[-8:] == """',), 
+            (b'""" or mystr[ -8:] == '''',), (b"''' or mystr[-8:] == "',), (b'":
                 multiplelines.append(lines)
                 lines = []
                 mystr = ''
@@ -136,6 +133,7 @@ def bytesToLines_(mybytes):
 
     return multiplelines
 
+
 #       DATABASETOLINES
 # INPUT: DATABASE CONNECTIVITY THAT HAS OUTPUT MULTIPLTE BLOB FILES
 # OUTPUT [[STRING]]
@@ -152,10 +150,3 @@ def printLines(lines):
     for i in lines:
         for j in i:
             print(j)
-
-
-
-
-
-
-

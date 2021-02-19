@@ -1,20 +1,49 @@
-########################### PURPOSE OF FILE :
+########################################################################################################################
+# FILE TO CONVENIENTLY GROUP ALL QUERIES
+#   Authors: Niklas Van der Mersch, Max Wübbenhorst
+########################################################################################################################
+#   FUNCTIONS:
 #
-# Return a bunch of queries in stead of them being thrown randomly in files.
+#       ~ get_query_01
+#           user_id, category, Failed_Submissions, Successful_Submissions, amount_bad_style_submissions, Points,
+#           On_Time, Too_Late, score_prolog, score_haskell
 #
 #
+#       ~ get_query_02
+#           user_id, category, Failed_Submissions, Successful_Submissions, amount_bad_style_submissions, Points,
+#           On_Time, Too_Late, language, score_prolog, score_haskell
+#
+#
+#       ~ get_query_03
+#           user_id, category, opl_ID, Failed_Submissions, Successful_Submissions, amount_bad_style_submissions, Points,
+#           On_Time, Too_Late, language, score_prolog, score_haskell
+#
+#
+#       ~ get_query_04
+#          compile_errors of user 4bd1135791ab4afe4d9f3215ea1705f8
+#
+#
+#       ~ get_query_05
+#          user_id, category, opl_ID, Failed_Submissions, Successful_Submissions, amount_bad_style_submissions, Points,
+#          On_Time, Too_Late, language, score_prolog, score_haskell
+#          filtered on submissions before the exam
+#
+#
+#       ~ get_query_06
+#          compile_errors of user 0956c2c7071ae611c2f740e3685ed470
+#
+#
+#       ~ get_query_07
+#          compile_errors of user a706bb348b2a0c23e35ae11e4d68fc17 and language prolog
+########################################################################################################################
 
 
-
-#
-#
-#
-def getQuery01():
+def get_query_01():
     query = """SELECT 
         u.user_id,
         category,
         SUM(nb_failed != 0) AS Failed_Submissions,
-        SUM(nb_failed = 0) AS Successfulll_Submissions,
+        SUM(nb_failed = 0) AS Successful_Submissions,
         SUM(r.style_result > '') AS amount_bad_style_submissions,
         SUM(s.points_awarded) AS Points,
         SUM(a.deadline * 10000 > s.timestamp) AS On_Time,
@@ -35,13 +64,13 @@ def getQuery01():
     return query
 
 
-def getQuery02():
+def get_query_02():
     query = """
     SELECT 
         u.user_id,
         category,
         SUM(nb_failed != 0) AS Failed_Submissions,
-        SUM(nb_failed = 0) AS Successfulll_Submissions,
+        SUM(nb_failed = 0) AS Successful_Submissions,
         SUM(r.style_result > '') AS amount_bad_style_submissions,
         SUM(s.points_awarded) AS Points,
         SUM(a.deadline * 10000 > s.timestamp) AS On_Time,
@@ -63,21 +92,22 @@ def getQuery02():
     """
     return query
 
-def getQuery03():
+
+def get_query_03():
     query = """
     SELECT 
-	u.user_id,
-    category,
-    opl_ID,
-    SUM(nb_failed != 0) AS Failed_Submissions,
-    SUM(nb_failed = 0) AS Successfulll_Submissions,
-    SUM(r.style_result > '') AS amount_bad_style_submissions,
-    SUM(s.points_awarded) AS Points,
-    SUM(a.deadline * 10000 > s.timestamp) AS On_Time,
-    SUM(a.deadline * 10000 < s.timestamp) AS Too_Late,
-    language,
-    score_prolog,
-    score_haskell
+        u.user_id,
+        category,
+        opl_ID,
+        SUM(nb_failed != 0) AS Failed_Submissions,
+        SUM(nb_failed = 0) AS Successful_Submissions,
+        SUM(r.style_result > '') AS amount_bad_style_submissions,
+        SUM(s.points_awarded) AS Points,
+        SUM(a.deadline * 10000 > s.timestamp) AS On_Time,
+        SUM(a.deadline * 10000 < s.timestamp) AS Too_Late,
+        language,
+        score_prolog,
+        score_haskell
 FROM
     submissions AS s
         INNER JOIN
@@ -95,15 +125,18 @@ ORDER BY a.category ASC
     """
     return query
 
-def getQuery04():
-    query= """SELECT r.compile_errors
-FROM results as r INNER JOIN submissions as s on s.submission_id = r.submission_id
-where s.user_id = "4bd1135791ab4afe4d9f3215ea1705f8" AND r.compile_errors > '' """
+
+def get_query_04():
+    query = """
+    SELECT r.compile_errors
+    FROM results as r 
+    INNER JOIN submissions as s on s.submission_id = r.submission_id
+    where s.user_id = "4bd1135791ab4afe4d9f3215ea1705f8" AND r.compile_errors > '' """
     return query
 
 
-def getQuery05():
-    query= """ 
+def get_query_05():
+    query = """ 
     SELECT  
     u.user_id, 
     category, 
@@ -135,14 +168,20 @@ ORDER BY a.category ASC"""
     return query
 
 
-def getQuery06():
-    query = """SELECT r.compile_errors
-    FROM results as r INNER JOIN submissions as s on s.submission_id = r.submission_id
+def get_query_06():
+    query = """
+    SELECT r.compile_errors
+    FROM results as r 
+    INNER JOIN submissions as s on s.submission_id = r.submission_id
     where s.user_id = "0956c2c7071ae611c2f740e3685ed470" AND r.compile_errors > '' """
     return query
 
-def getQuery07():
-    msg = """SELECT r.compile_errors
-FROM results as r INNER JOIN submissions as s on r.submission_id = s.submission_id INNER JOIN assignments as a on a.assignment_id = s.assignment_id
-WHERE a.language = 2 AND s.user_id = "a706bb348b2a0c23e35ae11e4d68fc17" """
+
+def get_query_07():
+    msg = """
+    SELECT r.compile_errors
+    FROM results as r 
+    INNER JOIN submissions as s on r.submission_id = s.submission_id 
+    INNER JOIN assignments as a on a.assignment_id = s.assignment_id
+    WHERE a.language = 2 AND s.user_id = "a706bb348b2a0c23e35ae11e4d68fc17" """
     return msg
