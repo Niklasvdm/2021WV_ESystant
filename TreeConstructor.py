@@ -132,7 +132,7 @@ def buildTrees(DictionaryCategories,DictionaryGrades):
         decisionTrees[category] = clf.fit(listValues,listGrades)
     return decisionTrees
 
-def buildTrees2(dataframe_to_train):
+def buildTrees_with_dataframe(dataframe_to_train):
     decisionTrees = {}
     for category in dataframe_to_train['category'].unique():
         clf = tree.DecisionTreeRegressor(max_depth=3)
@@ -182,7 +182,7 @@ def make_predictionswithgrades(userDictionary,gradeDictionary,categoryDictionary
     return(outputPredictions,outputScores)
 
 
-def make_predictionswithgrades2(decision_trees,dataframe,categoryList):
+def make_predictions_with_grades_in_df(decision_trees,dataframe,categoryList):
     outputPredictions = []
     outputScores = []
     for user in dataframe['user_id'].unique():
