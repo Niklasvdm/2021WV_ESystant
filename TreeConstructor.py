@@ -1,6 +1,9 @@
 from random import shuffle
 
 from sklearn import tree
+from sklearn import ensemble
+
+
 
 
 ########################################################################################################################
@@ -146,6 +149,44 @@ def build_trees_with_dataframe(dataframe_to_train):
 
         decision_trees[category] = clf.fit(list_values, list_grades)
     return decision_trees
+
+#   BUILD_BOOSTINGTREES_WITH_DATAFRAME
+#   This function takes a dataframe and uses it to train Boosting decision trees on
+#   Look at this ite for more information on use: https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.GradientBoostingRegressor.html#sklearn.ensemble.GradientBoostingRegressor
+#   DATARAME : https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html
+#   INPUT: [[USER_ID,CATEGORY,_,_,LANGUAGE,SCORE_PROLOG,SCORE_HASKELL]]
+#   CONVERSIONS: [[USER,CATEGORY,_,_,LANGUAGE,SCORE_PROLOG,SCORE_HASKELL]] -> USR : [[CATEGORY,_,_,LANGUAGE,SCORE_PROLOG,SCORE_HASKELL]]
+#   --> USR : CATEGORY : [_,_,LANGUAGE,SCORE_PROLOG,SCORE_HASKELL] OR   USR : CATEGORY : NULL
+#   ---> USR : [CATEGORY,_,_,LANGUAGE] , USR : [SCORE_PROLOG,SCORE_HASKELL]
+#   ----> DECISION TREE W/ [(usr_0):[CATEGORY_1,_,_,LANGUAGE,CATEGORY_2,_,_,LANGUAGE,...],
+#                                   (usr_1):CATEGORY_1,_,_,LANGUAGE,CATEGORY_2,_,_,LANGUAGE,...]]
+#   OUTPUT: DECISION TREES
+#   DEFAULT VALUES: LEARNING_RATE = 0.1 , N_ESTIMATORS = 100 (higher = better most of the times) , CRITERION = (SEE COMMENT BELOW) , MAX_DEPTH = 3 ,
+#       CRITERION = ‘friedman_mse’, ‘mse’, ‘mae’ -> “friedman_mse” for the mean squared error with improvement score by Friedman,
+#       “mse” for mean squared error, and “mae” for the mean absolute error.
+#       The default value of “friedman_mse” is generally the best as it can provide a better approximation in some cases.
+def build_boostingtrees_with_dataframe(dataframe_to_train):
+    boosting_tree = ensemble.GradientBoostingRegressor(learning_rate=0.3,n_estimators=50,criterion='mae',max_depth=5)
+    temp = dataframe_to_train.drop(['user_id','category','score_prolog','score_haskell'],axis = 1)
+    temp2 = temp.head(1)
+    length = len(temp2.to_numpy()[0])
+    possibleCategories = dataframe_to_train['category'].unique()
+    for_tree = []
+    #grades_per_user = []
+    for user in dataframe_to_train['user_id'].unique(): #We take for each user
+        usr_list = [] # EACH USER WILL HAVE A LONG LIST OF ... # TODO
+        data_usr = dataframe_to_train.loc[dataframe_to_train['user_id'] == user].drop(['user_id'],axis = 1) #Don't know what axis does
+        #grades_user = SO WE CAN INSERT THESE INTO THE TREE TODO
+        for category in possibleCategories:
+            data_cat = data_usr.loc[data_usr['category'] == category].drop(['category'],axis = 1)
+            if data_cat.empty:
+                temp = [category] + [-1 for _ in range(length)]
+                usr_list += temp
+            else:
+                usr_list += data_cat.values.tolist()[0]
+        for_tree.append(usr_list)
+        #grades_per_user.append
+    #boosting_tree.fit(for_tree,#grades_per_user)
 
 
 # Purpose of next function -> Make a prediction with the testDict
