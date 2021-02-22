@@ -5,8 +5,6 @@ from sklearn import ensemble
 from sklearn.multioutput import MultiOutputRegressor
 
 
-
-
 ########################################################################################################################
 #   FUNCTIONS:
 #
@@ -147,9 +145,9 @@ def build_trees_with_dataframe(dataframe_to_train):
 
         list_values = data_cat.drop(['language', 'score_prolog', 'score_haskell'], axis=1).values.tolist()
         list_grades = [x[language] for x in data_cat[['score_prolog', 'score_haskell']].values.tolist()]
-
         decision_trees[category] = clf.fit(list_values, list_grades)
     return decision_trees
+
 
 #   BUILD_BOOSTINGTREES_WITH_DATAFRAME
 #   This function takes a dataframe and uses it to train Boosting decision trees on
@@ -164,25 +162,28 @@ def build_trees_with_dataframe(dataframe_to_train):
 #   OUTPUT: DECISION TREES
 #   DEFAULT VALUES: LEARNING_RATE = 0.1 , N_ESTIMATORS = 100 (higher = better most of the times) , MAX_DEPTH = 3 ,
 def build_big_boostingtree_with_dataframe(dataframe_to_train, possibleCategories):
-    boosting_tree = MultiOutputRegressor(ensemble.GradientBoostingRegressor(learning_rate=0.1,n_estimators=1000,max_depth=3))
-    temp = dataframe_to_train.drop(['user_id','category','score_prolog','score_haskell'],axis = 1)
+    boosting_tree = MultiOutputRegressor(
+        ensemble.GradientBoostingRegressor(learning_rate=0.1, n_estimators=1000, max_depth=3))
+    temp = dataframe_to_train.drop(['user_id', 'category', 'score_prolog', 'score_haskell'], axis=1)
     length = len((temp.head(1)).to_numpy()[0])
     for_tree = []
     grades_per_user = []
-    for user in dataframe_to_train['user_id'].unique(): #We take for each user
-        usr_list = [] # EACH USER WILL HAVE A LONG LIST OF ... # TODO
-        data_usr = dataframe_to_train.loc[dataframe_to_train['user_id'] == user].drop(['user_id'],axis = 1) #Don't know what axis does
+    for user in dataframe_to_train['user_id'].unique():  # We take for each user
+        usr_list = []  # EACH USER WILL HAVE A LONG LIST OF ... # TODO
+        data_usr = dataframe_to_train.loc[dataframe_to_train['user_id'] == user].drop(['user_id'],
+                                                                                      axis=1)  # Don't know what axis does
         grades_user = data_usr.head(1).values.tolist()[0][-2:]
         for category in possibleCategories:
-            data_cat = data_usr.loc[data_usr['category'] == category].drop(['category','score_haskell','score_prolog'],axis = 1)
+            data_cat = data_usr.loc[data_usr['category'] == category].drop(
+                ['category', 'score_haskell', 'score_prolog'], axis=1)
             if data_cat.empty:
                 temp = [category] + [-1 for _ in range(length)]
                 usr_list += temp
             else:
                 usr_list += [category] + data_cat.values.tolist()[0]
-        grades_per_user.append(grades_user) # TODO: THIS IS TEMP FIX
+        grades_per_user.append(grades_user)  # TODO: THIS IS TEMP FIX
         for_tree.append(usr_list)
-    boosting_tree.fit(for_tree,grades_per_user)
+    boosting_tree.fit(for_tree, grades_per_user)
     return boosting_tree
 
 
@@ -261,27 +262,43 @@ def make_predictions_with_grades_in_df(decision_trees, dataframe):
 #           dataframe: a dataframe of submissions of users per category and user
 #   OUTPUT: output_prediction: a list of lists containing predicted score
 #           output_scores: a list of lists containing actual score
-def make_boosting_predictions_with_grades_in_df(boosting_tree, dataframe,categories):
+def make_boosting_predictions_with_grades_in_df(boosting_tree, dataframe, categories):
     output_predictions = []
-    temp = dataframe.drop(['user_id','category','score_prolog','score_haskell'],axis = 1)
+    temp = dataframe.drop(['user_id', 'category', 'score_prolog', 'score_haskell'], axis=1)
     length = len((temp.head(1)).to_numpy()[0])
     for_tree = []
     output_scores = []
-    for user in dataframe['user_id'].unique(): #We take for each user
-        usr_list = [] # EACH USER WILL HAVE A LONG LIST OF ... # TODO
-        data_usr = dataframe.loc[dataframe['user_id'] == user].drop(['user_id'],axis = 1) #Don't know what axis does
+    for user in dataframe['user_id'].unique():  # We take for each user
+        usr_list = []  # EACH USER WILL HAVE A LONG LIST OF ... # TODO
+        data_usr = dataframe.loc[dataframe['user_id'] == user].drop(['user_id'], axis=1)  # Don't know what axis does
         grades_user = data_usr.head(1).values.tolist()[0][-2:]
         for category in categories:
-            data_cat = data_usr.loc[data_usr['category'] == category].drop(['category','score_haskell','score_prolog'],axis = 1)
+            data_cat = data_usr.loc[data_usr['category'] == category].drop(
+                ['category', 'score_haskell', 'score_prolog'], axis=1)
             if data_cat.empty:
                 temp = [category] + [-1 for _ in range(length)]
                 usr_list += temp
             else:
                 usr_list += [category] + data_cat.values.tolist()[0]
-        output_scores.append(grades_user) # TODO: THIS IS TEMP FIX
+        output_scores.append(grades_user)  # TODO: THIS IS TEMP FIX
         for_tree.append(usr_list)
 
     for array in for_tree:
         prediction = boosting_tree.predict([array])
         output_predictions.append(prediction)
     return output_predictions, output_scores
+
+
+def build_boosting_trees_with_dataframe(dataframe_to_train):
+    decision_trees = {}
+    for category in dataframe_to_train['category'].unique():
+        clf = ensemble.GradientBoostingRegressor(learning_rate=0.1, n_estimators=1000, max_depth=3)
+        data_cat = dataframe_to_train.loc[dataframe_to_train['category'] == category].drop(['user_id', 'category'],
+                                                                                           axis=1)
+        language = int(data_cat.iloc[0]['language'] % 2)  # 1 voor haskell, 0 voor Prolog.
+
+        list_values = data_cat.drop(['language', 'score_prolog', 'score_haskell'], axis=1).values.tolist()
+        list_grades = [x[language] for x in data_cat[['score_prolog', 'score_haskell']].values.tolist()]
+
+        decision_trees[category] = clf.fit(list_values, list_grades)
+    return decision_trees
