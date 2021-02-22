@@ -2,6 +2,7 @@ from random import shuffle
 
 from sklearn import tree
 from sklearn import ensemble
+from sklearn.multioutput import MultiOutputRegressor
 
 
 
@@ -162,8 +163,8 @@ def build_trees_with_dataframe(dataframe_to_train):
 #                                   (usr_1):CATEGORY_1,_,_,LANGUAGE,CATEGORY_2,_,_,LANGUAGE,...]]
 #   OUTPUT: DECISION TREES
 #   DEFAULT VALUES: LEARNING_RATE = 0.1 , N_ESTIMATORS = 100 (higher = better most of the times) , MAX_DEPTH = 3 ,
-def build_boostingtrees_with_dataframe(dataframe_to_train,possibleCategories):
-    boosting_tree = ensemble.GradientBoostingRegressor(learning_rate=0.1,n_estimators=100,max_depth=3)
+def build_big_boostingtree_with_dataframe(dataframe_to_train, possibleCategories):
+    boosting_tree = MultiOutputRegressor(ensemble.GradientBoostingRegressor(learning_rate=0.1,n_estimators=1000,max_depth=3))
     temp = dataframe_to_train.drop(['user_id','category','score_prolog','score_haskell'],axis = 1)
     length = len((temp.head(1)).to_numpy()[0])
     for_tree = []
@@ -179,7 +180,7 @@ def build_boostingtrees_with_dataframe(dataframe_to_train,possibleCategories):
                 usr_list += temp
             else:
                 usr_list += [category] + data_cat.values.tolist()[0]
-        grades_per_user.append(sum(grades_user)) # TODO: THIS IS TEMP FIX
+        grades_per_user.append(grades_user) # TODO: THIS IS TEMP FIX
         for_tree.append(usr_list)
     boosting_tree.fit(for_tree,grades_per_user)
     return boosting_tree
@@ -277,7 +278,7 @@ def make_boosting_predictions_with_grades_in_df(boosting_tree, dataframe,categor
                 usr_list += temp
             else:
                 usr_list += [category] + data_cat.values.tolist()[0]
-        output_scores.append(sum(grades_user)) # TODO: THIS IS TEMP FIX
+        output_scores.append(grades_user) # TODO: THIS IS TEMP FIX
         for_tree.append(usr_list)
 
     for array in for_tree:
