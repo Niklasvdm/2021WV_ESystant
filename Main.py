@@ -166,6 +166,38 @@ def run(amount_of_runs, host_name, root_name, passw_root, database_name, query):
 # print(str(run_results[1]) + " average prolog pass/fail correct, out of " + str(run_results[4]))
 # print(str(run_results[2]) + " average haskell pass/fail correct, out of " + str(run_results[4]))
 # print(str(run_results[3]) + " average deviation predictions")
+#   PASS_FAIL
+#   This function evaluates given predictions with the actual score of a student. It will determine if the pass/fail
+#   prediction per language was correct, and if the overall score prediction of pass/fail was correct. It returns a
+#   list containing a list with two booleans: the first boolean showing if the prediction for prolog was correct,
+#   the second showing if the prediction for haskell was correct. The second element of the list is if the overall score
+#   was correct. This will be done for each prediction. The returned list will thus be [[[Bp,Bh],Bt],[[Bp,Bh],Bt],...]
+#   INPUT:  prediction: a list containing lists of two predictions.
+#           actual: a list with the same length and structure as prediction, but with the actual correct data.
+#   OUTPUT: A list of lists containing booleans and other lists with the structure [[[Bp,Bh],Bt],[[Bp,Bh],Bt],...],
+#           where B is a boolean showing that the prediction and actual result are both over or both under the required
+#           threshold of 5/10
+def pass_fail_boosting(prediction, actual):
+    correct_scores = []
+    for i in range(len(prediction)):
+        result_both = True
+        if ((prediction[i][0] < 10) and (actual[i] > 10)
+                or ((prediction[i][0] > 10) and (actual[i] < 10))):
+            result_both = False
+        correct_scores.append([result_both])
+
+    return correct_scores
+
+
+#   AVERAGE_DEVIATION
+#   This function calculates the average points the prediction was off.
+#   INPUT:  prediction: a list containing lists of two predictions.
+#           actual: a list with the same length and structure as prediction, but with the actual correct data.
+#   OUTPUT: the average deviation of type float of all numbers
+def average_deviation_boosting(prediction, actual):
+    return sum(
+        [abs(prediction[x][0] - actual[x]) for x in range(len(prediction))]) / (
+                   2 * len(prediction))
 
 
 def runBoostingRegressor(amount_of_runs, host_name, root_name, passw_root, database_name, query):
@@ -180,7 +212,7 @@ def runBoostingRegressor(amount_of_runs, host_name, root_name, passw_root, datab
     grades = query_result[['user_id', 'score_prolog', 'score_haskell']].drop_duplicates(subset='user_id')
     # this is a dataframe with all user_id's and all scores
     grades.reset_index(drop=True, inplace=True)  # we reset the number index of the dataframe (purely cosmetics)
-
+    possible_categories = query_result['category'].unique()
     for x in range(amount_of_runs):  # in this loop the experiment gets repeated
         print("run number " + str(x))
         verification_df = grades.sample(frac=0.1)  # this is a random selection of 10% of the dataframe
@@ -193,41 +225,30 @@ def runBoostingRegressor(amount_of_runs, host_name, root_name, passw_root, datab
         data_points_verification_df = query_result.drop(data_points_training_df.index)
         # we drop the selected training data to form the verification data
 
-        my_boosting_trees = TreeConstructor.build_boostingtrees_with_dataframe(data_points_training_df)
+        my_boosting_trees = TreeConstructor.build_boostingtrees_with_dataframe(data_points_training_df,possible_categories)
         # this function returns a dictionary containing the trained decision-trees having the categories as key.
 
-        mega_tree_predictions, mega_tree_actual_scores = TreeConstructor.make_predictions_with_grades_in_df(
-            my_boosting_trees, data_points_training_df)
+        predicted_list, actual_verification = TreeConstructor.make_boosting_predictions_with_grades_in_df(
+            my_boosting_trees, data_points_verification_df,possible_categories)
         #  this function returns two lists containing lists of grades in float. Predictions and Actual grades to compare
-
-        combining_tree = tree.DecisionTreeRegressor(max_depth=3)
-        my_mega_tree = combining_tree.fit(mega_tree_predictions, mega_tree_actual_scores)
-        # we train a tree that learns how trustworthy predictions are for each category
-
-        predicted_verification, actual_verification = TreeConstructor.make_predictions_with_grades_in_df(
-            my_boosting_trees, data_points_verification_df)
-        # here we actually predict unseen data and also return the actual grades so we can compare later
-
-        predicted_list = my_mega_tree.predict(predicted_verification).tolist()
-        # we take the predictions and feed it to out combiner tree who knows what tree to trust
-
-        pass_fail_result = pass_fail(predicted_list, actual_verification)  # here we calculate all data we need
-        total_avg_deviation += average_deviation(predicted_list, actual_verification)
-        total_true += sum([x[1] for x in pass_fail_result])
-        total_prolog += sum([x[0][0] for x in pass_fail_result])
-        total_haskell += sum([x[0][1] for x in pass_fail_result])
+#        for x in range(len(predicted_list)):
+#            print(predicted_list[x][0])
+#            print(actual_verification[x])
+        pass_fail_result = pass_fail_boosting(predicted_list, actual_verification)  # here we calculate all data we need
+        print(pass_fail_result)
+        total_avg_deviation += average_deviation_boosting(predicted_list, actual_verification)
+        total_true += sum([x[0] for x in pass_fail_result])
+ #       total_prolog += sum([x[0][0] for x in pass_fail_result])
+ #       total_haskell += sum([x[0][1] for x in pass_fail_result])
         # we add all the parameters because at the end we will divide it by the total amount of runs
         if length_prediction_list != len(pass_fail_result):
             length_prediction_list = len(pass_fail_result)
-    return [total_true / amount_of_runs, total_prolog / amount_of_runs, total_haskell / amount_of_runs,
-            total_avg_deviation / amount_of_runs, length_prediction_list]
+    return [total_true / amount_of_runs, total_avg_deviation / amount_of_runs, length_prediction_list]
 
 
 # Here we call the needed functions to initiate the experiment
 run_results = runBoostingRegressor(10, host, root, passw, database, my_tree_query)
-print(str(run_results[0]) + " average total pass/fail correct, out of " + str(run_results[4]))
-print(str(run_results[1]) + " average prolog pass/fail correct, out of " + str(run_results[4]))
-print(str(run_results[2]) + " average haskell pass/fail correct, out of " + str(run_results[4]))
-print(str(run_results[3]) + " average deviation predictions")
+print(str(run_results[0]) + " average total pass/fail correct, out of " + str(run_results[2]))
+print(str(run_results[1]) + " average deviation predictions")
 
 
