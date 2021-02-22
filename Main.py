@@ -243,7 +243,11 @@ def average_deviation_boosting(prediction, actual):
 def average_deviation_boosting2(prediction, actual):
     return sum(
         [abs(prediction[x][0][y] - actual[x][y]) for x in range(len(prediction)) for y in range(len(prediction[0][0]))]) / (
+                   2 * len(prediction)),\
+           sum(
+        [abs(prediction[x][0][0]+prediction[x][0][1] - actual[x][0]-actual[x][1]) for x in range(len(prediction))]) / (
                    2 * len(prediction))
+
 
 
 
@@ -252,6 +256,7 @@ def runBoostingRegressor(amount_of_runs, host_name, root_name, passw_root, datab
     total_prolog = 0  # the amount of correctly predicted pass/fail of prolog.
     total_haskell = 0  # the amount of correctly predicted pass/fail of haskell.
     total_avg_deviation = 0  # the sum of the average deviation of each run.
+    total_avg_deviation_both = 0
     length_prediction_list = 1  # the amount of predictions made each run.
 
     query_result = Database_Functions.query_database_dataframe(host_name, root_name, passw_root, database_name,
@@ -282,7 +287,9 @@ def runBoostingRegressor(amount_of_runs, host_name, root_name, passw_root, datab
 #            print(predicted_list[x][0])
 #            print(actual_verification[x])
         pass_fail_result = pass_fail_boosting2(predicted_list, actual_verification)  # here we calculate all data we need
-        total_avg_deviation += average_deviation_boosting2(predicted_list, actual_verification)
+        deviation = average_deviation_boosting2(predicted_list, actual_verification)
+        total_avg_deviation += deviation[0]
+        total_avg_deviation_both += deviation[1]
         total_true += sum([x[1] for x in pass_fail_result])
         total_prolog += sum([x[0][0] for x in pass_fail_result])
         total_haskell += sum([x[0][1] for x in pass_fail_result])
@@ -290,7 +297,7 @@ def runBoostingRegressor(amount_of_runs, host_name, root_name, passw_root, datab
         if length_prediction_list != len(pass_fail_result):
             length_prediction_list = len(pass_fail_result)
     return [total_true / amount_of_runs, total_prolog / amount_of_runs, total_haskell / amount_of_runs,
-            total_avg_deviation / amount_of_runs, length_prediction_list]
+            total_avg_deviation / amount_of_runs, length_prediction_list, total_avg_deviation_both / amount_of_runs]
 
 
 # Here we call the needed functions to initiate the experiment
@@ -299,3 +306,4 @@ print(str(run_results[0]) + " average total pass/fail correct, out of " + str(ru
 print(str(run_results[1]) + " average prolog pass/fail correct, out of " + str(run_results[4]))
 print(str(run_results[2]) + " average haskell pass/fail correct, out of " + str(run_results[4]))
 print(str(run_results[3]) + " average deviation predictions")
+print(str(run_results[5]) + " average deviation predictions")
