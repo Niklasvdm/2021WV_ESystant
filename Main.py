@@ -272,7 +272,10 @@ def runBoostingRegressor(amount_of_runs, host_name, root_name, passw_root, datab
     grades = query_result[['user_id', 'score_prolog', 'score_haskell']].drop_duplicates(subset='user_id')
     # this is a dataframe with all user_id's and all scores
     grades.reset_index(drop=True, inplace=True)  # we reset the number index of the dataframe (purely cosmetics)
-    possible_categories = query_result['category'].unique()
+    possible_categories = query_result.query('language==1')['category'].unique()
+    # selecting only prolog as cat
+    #possible_categories = query_result['category'].unique()
+
     for x in range(amount_of_runs):  # in this loop the experiment gets repeated
         print("run number " + str(x))
         verification_df = grades.sample(frac=0.1)  # this is a random selection of 10% of the dataframe
@@ -380,11 +383,61 @@ def run_boosting_regressor_cat_split(amount_of_runs, host_name, root_name, passw
             total_avg_deviation / amount_of_runs, length_prediction_list, total_avg_deviation_both / amount_of_runs]
 
 
+def run_boosting_regressor_language_split(amount_of_runs, host_name, root_name, passw_root, database_name, query):
+    total_true = 0  # the amount of correctly predicted pass/fail of the sum of both languages.
+    total_prolog = 0  # the amount of correctly predicted pass/fail of prolog.
+    total_haskell = 0  # the amount of correctly predicted pass/fail of haskell.
+    total_avg_deviation = 0  # the sum of the average deviation of each run.
+    total_avg_deviation_both = 0
+    length_prediction_list = 1  # the amount of predictions made each run.
 
+    query_result = Database_Functions.query_database_dataframe(host_name, root_name, passw_root, database_name,
+                                                               query)  # this is a dataframe with the needed data
+    grades = query_result[['user_id', 'score_prolog', 'score_haskell']].drop_duplicates(subset='user_id')
+    # this is a dataframe with all user_id's and all scores
+    grades.reset_index(drop=True, inplace=True)  # we reset the number index of the dataframe (purely cosmetics)
+
+
+
+    for x in range(amount_of_runs):  # in this loop the experiment gets repeated
+        print("run number " + str(x))
+        verification_df = grades.sample(frac=0.1)  # this is a random selection of 10% of the dataframe
+        train_df = grades.drop(verification_df.index)  # we drop the sample that we have selected to retain 90% to train
+
+        training_users = set(train_df['user_id'].tolist())  # a set of all selected training-users
+
+        data_points_training_df = query_result.iloc[np.where(query_result.user_id.isin(training_users))]
+        # A dataframe of all submissions of the selected users.
+        data_points_verification_df = query_result.drop(data_points_training_df.index)
+        # we drop the selected training data to form the verification data
+
+        for language in range(1, 3):
+            possible_categories = query_result.query('language==' + str(language))['category'].unique()
+
+            my_boosting_trees = TreeConstructor.build_big_language_boostingtree_with_dataframe(data_points_training_df, possible_categories,language)
+            # this function returns a dictionary containing the trained decision-trees having the categories as key.
+
+            predicted_list, actual_verification = TreeConstructor.make_language_boosting_predictions_with_grades_in_df(
+                my_boosting_trees, data_points_verification_df,possible_categories,language)
+            #  this function returns two lists containing lists of grades in float. Predictions and Actual grades to compare
+
+            predicted_list = [x[0][language%2] for x in predicted_list]
+            pass_fail_result = [(predicted_list[x]>5 and actual_verification[x]>5)
+                                or (predicted_list[x]<5 and actual_verification[x]<5) for x in range(len(predicted_list))]  # here we calculate all data we need
+            total_avg_deviation += sum([abs(predicted_list[x]-actual_verification[x]) for x in range(len(predicted_list))])/len(predicted_list)
+            if(language == 1):
+                total_haskell += sum(pass_fail_result)
+            else:
+                total_prolog += sum(pass_fail_result)
+            # we add all the parameters because at the end we will divide it by the total amount of runs
+            if length_prediction_list != len(pass_fail_result):
+                length_prediction_list = len(pass_fail_result)
+    return [total_true / amount_of_runs, total_prolog / amount_of_runs, total_haskell / amount_of_runs,
+            total_avg_deviation / (2*amount_of_runs), length_prediction_list, total_avg_deviation_both / amount_of_runs]
 
 
 # Here we call the needed functions to initiate the experiment
-run_results = run_boosting_regressor_cat_split(100, host, root, passw, database, my_tree_query)
+run_results = run_boosting_regressor_language_split(100, host, root, passw, database, my_tree_query)
 print(str(run_results[0]) + " average total pass/fail correct, out of " + str(run_results[4]))
 print(str(run_results[1]) + " average prolog pass/fail correct, out of " + str(run_results[4]))
 print(str(run_results[2]) + " average haskell pass/fail correct, out of " + str(run_results[4]))
