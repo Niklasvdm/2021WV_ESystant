@@ -388,5 +388,5 @@ run_results = run_boosting_regressor_cat_split(100, host, root, passw, database,
 print(str(run_results[0]) + " average total pass/fail correct, out of " + str(run_results[4]))
 print(str(run_results[1]) + " average prolog pass/fail correct, out of " + str(run_results[4]))
 print(str(run_results[2]) + " average haskell pass/fail correct, out of " + str(run_results[4]))
-print(str(run_results[3]) + " average deviation predictions")
-print(str(run_results[5]) + " average deviation predictions")
+print(str(run_results[3]) + " average deviation single predictions")
+print(str(run_results[5]) + " average deviation predictions both combined")
