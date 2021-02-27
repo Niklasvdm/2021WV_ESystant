@@ -7,6 +7,9 @@ import Database_Functions
 import Queries
 import TreeConstructor
 
+import pydotplus
+
+
 ########################################################################################################################
 #           THIS FILE SERVES THE PURPOSE OF RUNNING THE MAIN EXPERIMENT
 ########################################################################################################################
@@ -250,8 +253,8 @@ def average_deviation_boosting(prediction, actual):
 #   OUTPUT: the average deviation of type float of all numbers
 def average_deviation_boosting2(prediction, actual):
     return sum(
-        [abs(prediction[x][0][y] - actual[x][y]) for x in range(len(prediction)) for y in range(len(prediction[0][0]))]) / (
-                   2 * len(prediction)),\
+        [abs(prediction[x][0][y] - actual[x][y]) for x in range(len(prediction)) for y in
+         range(len(prediction[0][0]))]) / ( 2 * len(prediction)),\
            sum(
         [abs(prediction[x][0][0]+prediction[x][0][1] - actual[x][0]-actual[x][1]) for x in range(len(prediction))]) / (
                    2 * len(prediction))
@@ -288,7 +291,8 @@ def runBoostingRegressor(amount_of_runs, host_name, root_name, passw_root, datab
         data_points_verification_df = query_result.drop(data_points_training_df.index)
         # we drop the selected training data to form the verification data
 
-        my_boosting_trees = TreeConstructor.build_big_boostingtree_with_dataframe(data_points_training_df, possible_categories)
+        my_boosting_trees = TreeConstructor.build_big_boostingtree_with_dataframe(data_points_training_df,
+                                                                                  possible_categories)
         # this function returns a dictionary containing the trained decision-trees having the categories as key.
 
         predicted_list, actual_verification = TreeConstructor.make_boosting_predictions_with_grades_in_df(
@@ -297,7 +301,8 @@ def runBoostingRegressor(amount_of_runs, host_name, root_name, passw_root, datab
 #        for x in range(len(predicted_list)):
 #            print(predicted_list[x][0])
 #            print(actual_verification[x])
-        pass_fail_result = pass_fail_boosting2(predicted_list, actual_verification)  # here we calculate all data we need
+        pass_fail_result = pass_fail_boosting2(predicted_list, actual_verification)
+        # here we calculate all data we need
         deviation = average_deviation_boosting2(predicted_list, actual_verification)
         total_avg_deviation += deviation[0]
         total_avg_deviation_both += deviation[1]
@@ -354,11 +359,14 @@ def run_boosting_regressor_cat_split(amount_of_runs, host_name, root_name, passw
         my_boosting_trees = TreeConstructor.build_boosting_trees_with_dataframe(data_points_training_df)
         # this function returns a dictionary containing the trained decision-trees having the categories as key.
 
+        example_boosting_trees = my_boosting_trees
+
         mega_tree_predictions, mega_tree_actual_scores = TreeConstructor.make_predictions_with_grades_in_df(
             my_boosting_trees, data_points_training_df)
         #  this function returns two lists containing lists of grades in float. Predictions and Actual grades to compare
 
-        combining_tree = MultiOutputRegressor(ensemble.GradientBoostingRegressor(learning_rate=0.1, n_estimators=1000, max_depth=3))
+        combining_tree = MultiOutputRegressor(ensemble.GradientBoostingRegressor(learning_rate=0.1, n_estimators=1000,
+                                                                                 max_depth=3))
         my_mega_boosting_tree = combining_tree.fit(mega_tree_predictions, mega_tree_actual_scores)
         # we train a tree that learns how trustworthy predictions are for each category
 
@@ -380,7 +388,7 @@ def run_boosting_regressor_cat_split(amount_of_runs, host_name, root_name, passw
         if length_prediction_list != len(pass_fail_result):
             length_prediction_list = len(pass_fail_result)
     return [total_true / amount_of_runs, total_prolog / amount_of_runs, total_haskell / amount_of_runs,
-            total_avg_deviation / amount_of_runs, length_prediction_list, total_avg_deviation_both / amount_of_runs]
+            total_avg_deviation / amount_of_runs, length_prediction_list, total_avg_deviation_both / amount_of_runs, example_boosting_trees]
 
 
 def run_boosting_regressor_language_split(amount_of_runs, host_name, root_name, passw_root, database_name, query):
@@ -397,8 +405,6 @@ def run_boosting_regressor_language_split(amount_of_runs, host_name, root_name, 
     # this is a dataframe with all user_id's and all scores
     grades.reset_index(drop=True, inplace=True)  # we reset the number index of the dataframe (purely cosmetics)
 
-
-
     for x in range(amount_of_runs):  # in this loop the experiment gets repeated
         print("run number " + str(x))
         verification_df = grades.sample(frac=0.1)  # this is a random selection of 10% of the dataframe
@@ -414,17 +420,20 @@ def run_boosting_regressor_language_split(amount_of_runs, host_name, root_name, 
         for language in range(1, 3):
             possible_categories = query_result.query('language==' + str(language))['category'].unique()
 
-            my_boosting_trees = TreeConstructor.build_big_language_boostingtree_with_dataframe(data_points_training_df, possible_categories,language)
+            my_boosting_trees = TreeConstructor.build_big_language_boostingtree_with_dataframe(
+                data_points_training_df, possible_categories,language)
             # this function returns a dictionary containing the trained decision-trees having the categories as key.
 
             predicted_list, actual_verification = TreeConstructor.make_language_boosting_predictions_with_grades_in_df(
                 my_boosting_trees, data_points_verification_df,possible_categories,language)
-            #  this function returns two lists containing lists of grades in float. Predictions and Actual grades to compare
+        #  this function returns two lists containing lists of grades in float. Predictions and Actual grades to compare
 
             predicted_list = [x[0][language%2] for x in predicted_list]
             pass_fail_result = [(predicted_list[x]>5 and actual_verification[x]>5)
-                                or (predicted_list[x]<5 and actual_verification[x]<5) for x in range(len(predicted_list))]  # here we calculate all data we need
-            total_avg_deviation += sum([abs(predicted_list[x]-actual_verification[x]) for x in range(len(predicted_list))])/len(predicted_list)
+                                or (predicted_list[x]<5 and actual_verification[x]<5) for x in
+                                range(len(predicted_list))]  # here we calculate all data we need
+            total_avg_deviation += sum([abs(predicted_list[x]-actual_verification[x]) for x in
+                                        range(len(predicted_list))])/len(predicted_list)
             if(language == 1):
                 total_haskell += sum(pass_fail_result)
             else:
@@ -437,9 +446,24 @@ def run_boosting_regressor_language_split(amount_of_runs, host_name, root_name, 
 
 
 # Here we call the needed functions to initiate the experiment
-run_results = run_boosting_regressor_language_split(100, host, root, passw, database, my_tree_query)
+run_results = run_boosting_regressor_cat_split(1, host, root, passw, database, my_tree_query)
 print(str(run_results[0]) + " average total pass/fail correct, out of " + str(run_results[4]))
 print(str(run_results[1]) + " average prolog pass/fail correct, out of " + str(run_results[4]))
 print(str(run_results[2]) + " average haskell pass/fail correct, out of " + str(run_results[4]))
 print(str(run_results[3]) + " average deviation single predictions")
 print(str(run_results[5]) + " average deviation predictions both combined")
+
+for x in run_results[6].keys():
+    for i in range(0, 10):
+        sub_tree = run_results[6][x].estimators_[i, 0]
+
+        dot_data = tree.export_graphviz(
+            sub_tree,
+            out_file=None, filled=True,
+            rounded=True,
+            special_characters=True,
+            proportion=True,
+        )
+
+        graph = pydotplus.graph_from_dot_data(dot_data)
+        graph.write_png("tree" + str(i) + ".png")
