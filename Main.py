@@ -46,11 +46,16 @@ import pydotplus
 #                   - the amount of predictions that were made
 ########################################################################################################################
 
-#host,root,passw = Database_Functions.NiklasConnectivity()
-host, root, passw = Database_Functions.MaxConnectivity()
+host,root,passw = Database_Functions.NiklasConnectivity()
+#host, root, passw = Database_Functions.MaxConnectivity()
 
-my_tree_query = Queries.get_query_05()  # A SQL-querry in string
-database = "esystant1920"  # The database that will be used
+my_tree_query = Queries.get_query_05_()  # A SQL-querry in string
+  # The database that will be used
+database1617 = "esystant1617"
+database1718 = "esystant1718"
+database1819 =  "esystant1819"
+database1920 = "esystant1920"
+database = database1920
 
 
 #   PASS_FAIL
@@ -170,13 +175,14 @@ def run(amount_of_runs, host_name, root_name, passw_root, database_name, query):
     return [total_true / amount_of_runs, total_prolog / amount_of_runs, total_haskell / amount_of_runs,
             total_avg_deviation / amount_of_runs, length_prediction_list, total_avg_deviation_both / amount_of_runs]
 
-"""
-run_results = run(10, host, root, passw, database, my_tree_query)
+
+run_results = run(10, host, root, passw, database1617, my_tree_query)
 print(str(run_results[0]) + " average total pass/fail correct, out of " + str(run_results[4]))
 print(str(run_results[1]) + " average prolog pass/fail correct, out of " + str(run_results[4]))
 print(str(run_results[2]) + " average haskell pass/fail correct, out of " + str(run_results[4]))
 print(str(run_results[3]) + " average deviation predictions")
-"""
+
+print("Ik ben Klaar")
 ########################################################################################################################
 # New type of tree
 ########################################################################################################################
