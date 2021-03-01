@@ -168,6 +168,132 @@ ORDER BY a.category ASC"""
     return query
 
 
+def get_query_05_1617():
+    query = """ 
+   SELECT
+    u.user_id,
+    category,
+    SUM(nb_failed != 0) AS Failed_Submissions,
+    SUM(nb_failed = 0) AS Successfulll_Submissions,
+    SUM(r.style_result > '') AS amount_bad_style_submissions,
+    SUM(
+        a.deadline * 10000 > s.timestamp
+    ) AS On_Time,
+    SUM(
+        a.deadline * 10000 < s.timestamp
+    ) AS Too_Late,
+    a.language,
+    g.score_prolog,
+    g.score_haskell
+FROM
+    submissions AS s
+INNER JOIN results AS r
+ON
+    r.submission_id = s.submission_id
+INNER JOIN assignments AS a
+ON
+    a.assignment_id = s.assignment_id
+INNER JOIN users AS u
+ON
+    u.user_id = s.user_id
+INNER JOIN grades AS g
+ON
+    g.user_id = u.user_id
+
+WHERE
+    TIMESTAMP < 201701310000
+GROUP BY
+    u.user_id,
+    category,
+    LANGUAGE
+ORDER BY
+    a.category ASC"""
+    return query
+
+def get_query_05_1718():
+    query = """ 
+   SELECT
+    u.user_id,
+    category,
+    SUM(nb_failed != 0) AS Failed_Submissions,
+    SUM(nb_failed = 0) AS Successfulll_Submissions,
+    SUM(r.style_result > '') AS amount_bad_style_submissions,
+    SUM(
+        a.deadline * 10000 > s.timestamp
+    ) AS On_Time,
+    SUM(
+        a.deadline * 10000 < s.timestamp
+    ) AS Too_Late,
+    a.language,
+    g.score_prolog,
+    g.score_haskell
+FROM
+    submissions AS s
+INNER JOIN results AS r
+ON
+    r.submission_id = s.submission_id
+INNER JOIN assignments AS a
+ON
+    a.assignment_id = s.assignment_id
+INNER JOIN users AS u
+ON
+    u.user_id = s.user_id
+INNER JOIN grades AS g
+ON
+    g.user_id = u.user_id
+
+WHERE
+    TIMESTAMP < 201801310000
+GROUP BY
+    u.user_id,
+    category,
+    LANGUAGE
+ORDER BY
+    a.category ASC"""
+    return query
+
+def get_query_05_1819():
+    query = """ 
+   SELECT
+    u.user_id,
+    category,
+    SUM(nb_failed != 0) AS Failed_Submissions,
+    SUM(nb_failed = 0) AS Successfulll_Submissions,
+    SUM(r.style_result > '') AS amount_bad_style_submissions,
+    SUM(
+        a.deadline * 10000 > s.timestamp
+    ) AS On_Time,
+    SUM(
+        a.deadline * 10000 < s.timestamp
+    ) AS Too_Late,
+    a.language,
+    g.score_prolog,
+    g.score_haskell
+FROM
+    submissions AS s
+INNER JOIN results AS r
+ON
+    r.submission_id = s.submission_id
+INNER JOIN assignments AS a
+ON
+    a.assignment_id = s.assignment_id
+INNER JOIN users AS u
+ON
+    u.user_id = s.user_id
+INNER JOIN grades AS g
+ON
+    g.user_id = u.user_id
+
+WHERE
+    TIMESTAMP < 201901310000
+GROUP BY
+    u.user_id,
+    category,
+    LANGUAGE
+ORDER BY
+    a.category ASC"""
+    return query
+
 def get_query_06():
     query = """
     SELECT r.compile_errors
