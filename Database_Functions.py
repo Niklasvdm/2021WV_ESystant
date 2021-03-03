@@ -69,23 +69,23 @@ from pandas import read_sql
 ########################################################################################################################
 
 def NiklasConnectivity():
-    return niklashost, niklasroot, niklaspassw, niklassheetLocation
+    return niklashost, niklasroot, niklaspassw, niklasSheetLocation
 
 
 niklashost = "localhost"
 niklasroot = "root"
 niklaspassw = ""
-niklassheetLocation = ""
+niklasSheetLocation = ""
 
 
 def MaxConnectivity():
-    return maxhost, maxroot, maxpassw, maxsheetLocation
+    return maxhost, maxroot, maxpassw, maxSheetLocation
 
 
 maxhost = "localhost"
 maxroot = "root"
 maxpassw = "passwordroot"
-maxsheetLocation = "/Users/informatica/Desktop/BPExcel/"
+maxSheetLocation = "/Users/informatica/Desktop/BPExcel/"
 
 
 def check_server_connectivity(host_name, user_name, user_password):
