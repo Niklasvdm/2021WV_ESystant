@@ -468,13 +468,14 @@ def run_boosting_regressor_language_split(amount_of_runs, host_name, root_name, 
             if length_prediction_list != len(pass_fail_result):
                 length_prediction_list = len(pass_fail_result)
 
+            language_lists_prediction.append(predicted_list)
+            language_lists_actual.append(actual_verification)
         for xx in range(0,len(language_lists_prediction),2):
             dfx = DataFrame({'Predicted Prolog':language_lists_prediction[xx]})
             dfx['Predicted Haskell'] = language_lists_prediction[xx+1]
             dfx['Actual Prolog'] = language_lists_actual[xx]
             dfx['Actual Haskell'] = language_lists_actual[xx+1]
             df = concat([df,dfx])
-
     return [total_true / amount_of_runs, total_prolog / amount_of_runs, total_haskell / amount_of_runs,
             total_avg_deviation / (2*amount_of_runs), length_prediction_list, total_avg_deviation_both / amount_of_runs,df]
 
@@ -511,32 +512,35 @@ print(str(run_results[5]) + " average deviation predictions both combined")
 
 #create excel sheets
 
-databasequery = [(database1617,Queries.get_query_05_1617()),(database1718,Queries.get_query_05_1718()),(database1819,Queries.get_query_05_1819()),(database1920,Queries.get_query_05())]
+databasequery = [(database1617,Queries.get_query_05_1617()),(database1718,Queries.get_query_05_1718()),(database1819,Queries.get_query_05_1819())]
 for (database, my_tree_query) in databasequery:
-    run_results = run_decision_tree(1, host, root, passw, database, my_tree_query)
+    run_results = run_boosting_regressor_language_split(400, host, root, passw, database, my_tree_query)
+    print(str(run_results[0]) + " average total pass/fail correct, out of " + str(run_results[4]))
+    print(str(run_results[1]) + " average prolog pass/fail correct, out of " + str(run_results[4]))
+    print(str(run_results[2]) + " average haskell pass/fail correct, out of " + str(run_results[4]))
+    print(str(run_results[3]) + " average deviation single predictions")
+    run_results[-1].to_excel(sheetLocation + database + "BTL.xlsx", sheet_name=str(run_results[0]) + "#" + str(run_results[1]) + "#" + str(
+                                 run_results[2]) + "-" + str(run_results[4]) + "#" + str(run_results[3]))
+    run_results = run_decision_tree(400, host, root, passw, database, my_tree_query)
     print(str(run_results[0]) + " average total pass/fail correct, out of " + str(run_results[4]))
     print(str(run_results[1]) + " average prolog pass/fail correct, out of " + str(run_results[4]))
     print(str(run_results[2]) + " average haskell pass/fail correct, out of " + str(run_results[4]))
     print(str(run_results[3]) + " average deviation single predictions")
     run_results[-1].to_excel(sheetLocation+database+"DT.xlsx",sheet_name=str(run_results[0])+"#"+str(run_results[1])+"#"+str(run_results[2])+"-"+str(run_results[4])+"#"+str(run_results[3]))
-    run_results = runBoostingRegressor(1, host, root, passw, database, my_tree_query)
+    run_results = runBoostingRegressor(400, host, root, passw, database, my_tree_query)
     print(str(run_results[0]) + " average total pass/fail correct, out of " + str(run_results[4]))
     print(str(run_results[1]) + " average prolog pass/fail correct, out of " + str(run_results[4]))
     print(str(run_results[2]) + " average haskell pass/fail correct, out of " + str(run_results[4]))
     print(str(run_results[3]) + " average deviation single predictions")
     run_results[-1].to_excel(sheetLocation+database+"BT.xlsx",sheet_name=str(run_results[0])+"#"+str(run_results[1])+"#"+str(run_results[2])+"-"+str(run_results[4])+"#"+str(run_results[3]))
-    run_results = run_boosting_regressor_cat_split(1, host, root, passw, database, my_tree_query)
+    run_results = run_boosting_regressor_cat_split(400, host, root, passw, database, my_tree_query)
     print(str(run_results[0]) + " average total pass/fail correct, out of " + str(run_results[4]))
     print(str(run_results[1]) + " average prolog pass/fail correct, out of " + str(run_results[4]))
     print(str(run_results[2]) + " average haskell pass/fail correct, out of " + str(run_results[4]))
     print(str(run_results[3]) + " average deviation single predictions")
     run_results[-1].to_excel(sheetLocation+database+"BTC.xlsx",sheet_name=str(run_results[0])+"#"+str(run_results[1])+"#"+str(run_results[2])+"-"+str(run_results[4])+"#"+str(run_results[3]))
-    run_results = run_boosting_regressor_language_split(1, host, root, passw, database, my_tree_query)
-    print(str(run_results[0]) + " average total pass/fail correct, out of " + str(run_results[4]))
-    print(str(run_results[1]) + " average prolog pass/fail correct, out of " + str(run_results[4]))
-    print(str(run_results[2]) + " average haskell pass/fail correct, out of " + str(run_results[4]))
-    print(str(run_results[3]) + " average deviation single predictions")
-    run_results[-1].to_excel(sheetLocation+database+"BTL.xlsx",sheet_name=str(run_results[0])+"#"+str(run_results[1])+"#"+str(run_results[2])+"-"+str(run_results[4])+"#"+str(run_results[3]))
+
+
 
 
 
