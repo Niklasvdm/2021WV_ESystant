@@ -15,20 +15,26 @@ myQuery = get_query_06()
 
 query_result = Database_Functions.query_database_dataframe(host,root,passw,database,myQuery)
 print(query_result)
-for assignment_id in query_result['assignment_id'].unique():
-    language = query_result.loc[query_result['assignment_id'] == assignment_id].drop(['assignment_id','compile_errors'],
+for category in query_result['category'].unique():
+    language = query_result.loc[query_result['category'] == category].drop(['category','compile_errors','assignment_id'],
                                                                               axis=1).head(1).values.tolist()[0][0]
-    files = query_result.loc[query_result['assignment_id'] == assignment_id].drop(['assignment_id', 'language'],
-                                                                                  axis=1)
-    #my_files = files
-    my_files = files.values.tolist()
-    my_bytes = Blob_File_Analysis.bytesToLines(my_files)
-    if len(my_bytes) ==0:
-        print("oops, dan maar niet")
-    elif language == 1:
-        print(haskell_parser(my_files))
-    else:
-        print(prolog_parser(my_files))
+    category_df = query_result.loc[query_result['category'] == category].drop(['category'],
+                                                                              axis=1)
+    byAssigment = []
+    a= 0
+    for assignment_id in category_df['assignment_id'].unique():
+        files = category_df.loc[category_df['assignment_id'] == assignment_id].drop(['assignment_id', 'language'],
+                                                                                      axis=1)
+
+        my_files = files.values.tolist()
+        if len(my_files) ==0:
+            print("oops, dan maar niet")
+        elif language == 1:
+            byAssigment.append(haskell_parser(my_files))
+        else:
+            byAssigment.append(prolog_parser(my_files))
+        a += 1
+    print("the category was: " + str(category) + " there were " + str(a) + " assignments"  + " and the error message was: \n" , byAssigment)
 
 ###
 # 1e functie -> We geven student + oefz mee en we willen gewoon de opeenvolgende errors voor die oefz.
