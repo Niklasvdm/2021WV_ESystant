@@ -45,11 +45,12 @@ from parse import *
 def prolog_parser(msg):
     final_message = []
     for i in msg:
-        if len(i) == 0:
-            i = ["NO TEXT"] # todo je gebruikt i dan ook niet meer. Gewoon de elif if maken zou volgens mij genoeg zijn?
+        if i == [bytes(b'')]:
+            final_message.append(["Empty file"]) # todo je gebruikt i dan ook niet meer. Gewoon de elif if maken zou volgens mij genoeg zijn?
         else:
             sequence = []
-            for j in str(i):
+            for j in i:
+                j = str(j)
 
                 # Syntax Error
                 result = search("Syntax Error", j, case_sensitive=False)
