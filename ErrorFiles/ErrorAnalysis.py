@@ -1,6 +1,6 @@
 from parse import *
-
-
+from sklearn.feature_extraction.text import TfidfVectorizer
+from numpy import linalg
 ########################################################################################################################
 #           THIS FILE SERVES THE PURPOSE OF PARSING THE ERROR MESSAGES OF HASKELL & PROLOG
 ########################################################################################################################
@@ -83,6 +83,94 @@ def prolog_parser(msg):
                 final_message.append(sequence)
 
     return final_message
+
+#
+#
+#
+#
+def prolog_numerical_parser(msg):
+    finalmsg = ''
+    for i in msg:
+        if i == [bytes(b'')]:
+            finalmsg += '0'
+        else:
+            tempmsg = ''
+            sequence = []
+            for j in i:
+                j = str(j)
+
+                # Syntax Error
+                result = search("Syntax Error", j, case_sensitive=False)
+                if result is not None:
+                    tempmsg += '1'
+                    #sequence.append("Syntax Error")
+
+                # Trying to modify procedure.
+                result = search("modify static", j, case_sensitive=False)
+                if result is not None:
+                    tempmsg += '2'
+                    #sequence.append("Trying to modify static procedure")
+
+                # Traceback.
+                result = search("traceback", j, case_sensitive=False)
+                if result is not None:
+                    tempmsg += '3'
+                    #sequence.append("Traceback error")
+
+                # Type error.
+                result = search("Type error", j, case_sensitive=False)
+                if result is not None:
+                    tempmsg += '4'
+                    #sequence.append("Type Error")
+
+                # Warning
+                result = search("warning", j, case_sensitive=False)
+                if result is not None:
+                    tempmsg += '5'
+                    #sequence.append("Warning")
+
+            if len(tempmsg) == 0:
+                finalmsg += '6'
+            else:
+                finalmsg += tempmsg
+
+    return finalmsg
+
+
+def document_tfid_parser(documents):
+    # So we want to parse one single document
+
+    # Het werkt niet met alle documenten
+    # vectorizer = TfidfVectorizer()
+    # X = vectorizer.fit_transform(documents)
+    # print(vectorizer.get_feature_names())
+    # print(vectorizer.get_params())
+    # print(vectorizer.get_stop_words())
+    # print(X)
+    # print(X.shape)
+    sumOfDocuments = []
+    for document in documents:
+        sumOfDocuments.append(str(document[0]).replace('_',' '))
+        # if len(document[0]) > 4:
+        #     vectoriser = TfidfVectorizer()
+        #     X = vectoriser.fit_transform(document)
+        #     print(vectoriser.get_feature_names())
+        #     print(vectoriser.get_params())
+        #     print(vectoriser.get_stop_words())
+        #     print(X.shape)
+        #     print(X)
+        # else:
+        #     pass
+    if len(sumOfDocuments) > 4:
+        vectoriser = TfidfVectorizer(max_df=0.7)
+        X = vectoriser.fit_transform(sumOfDocuments)
+        print(vectoriser.get_feature_names())
+        print(vectoriser.get_params())
+        print(vectoriser.get_stop_words())
+        print(X.shape)
+        print(X)
+    else:
+        pass
 
 
 ########################################################################################################################
@@ -201,4 +289,130 @@ def haskell_parser(msg):
             # Possible -> Unknown Error.
             else:
                 final_message.append(["Unknown Error"])
+    return final_message
+
+
+def haskell_numerical_parser(msg):
+    final_message = ''
+    for i in msg:
+        #i = i[2:]
+        if i == [bytes(b'')]:
+            None # todo je gebruikt i dan ook niet meer. Gewoon de elif if maken zou volgens mij genoeg zijn?
+        elif len(i) != 0:
+            tempmsg = ''
+            for j in i:
+                j = str(j)
+                # The Type Signature was wrong
+                result = search("The type signature", j, case_sensitive=False)
+                if result is not None:
+                    tempmsg += '1'
+                    #sequence.append("The Type Signature was wrong")
+
+                # Variable not in scope
+                result = search("Not in scope", j, case_sensitive=False)
+                if result is not None:
+                    tempmsg += '2'
+                    #sequence.append("Variable not in scope")
+
+                # Expected type not met
+                result = search("expected type", j, case_sensitive=False)
+                if result is not None:
+                    tempmsg += '3'
+                    #sequence.append("Expected type not met")
+
+                # Problem with argument(s)
+                result = search("argument", j, case_sensitive=False)
+                if result is not None:
+                    tempmsg += '4'
+                    #sequence.append("Problem with argument(s)")
+
+                # Function not in scope
+                result = search("Not in scope", j, case_sensitive=False)
+                if result is not None:
+                    tempmsg += '5'
+                    #sequence.append("Function not in scope")
+
+                # Function is not the correct type
+                result = search("Derived Instance", j, case_sensitive=False)
+                if result is not None:
+                    tempmsg += '6'
+                    #sequence.append("Function is not the correct type")
+
+                # Parse error occured
+                result = search("parse", j, case_sensitive=False)
+                if result is not None:
+                    tempmsg += '7'
+                    #sequence.append("Parse error occured")
+
+                # Instance error
+                result = search("instance", j, case_sensitive=False)
+                if result is not None:
+                    tempmsg += '8'
+                    #sequence.append("Instance error")
+
+                # Function missing
+                result = search("No explicit implementation", j, case_sensitive=False)
+                if result is not None:
+                    tempmsg += '9'
+                    #sequence.append("Function missing")
+
+                # Multiple Declarations
+                result = search("Multiple Declarations", j, case_sensitive=False)
+                if result is not None:
+                    tempmsg += 'A'
+                    #sequence.append("Multiple Declarations")
+
+                # Syntax Error
+                result = search("Syntax error", j, case_sensitive=False)
+                if result is not None:
+                    tempmsg += 'B'
+                    #sequence.append("Syntax Error")
+
+                # Pattern Binding error
+                result = search("Pattern binding", j, case_sensitive=False)
+                if result is not None:
+                    tempmsg += 'C'
+                    #sequence.append("Pattern Binding error")
+
+                # Conflicting definitions
+                result = search("conflicting definitions", j, case_sensitive=False)
+                if result is not None:
+                    tempmsg += 'D'
+                    #sequence.append("Conflicting definitions")
+
+                # Module not loaded in
+                result = search("find module", j, case_sensitive=False)
+                if result is not None:
+                    tempmsg += 'E'
+                    #sequence.append("Module not loaded in")
+
+                # Error with pattern matching
+                result = search("pattern match", j, case_sensitive=False)
+                if result is not None:
+                    tempmsg += 'F'
+                    #sequence.append("Error with pattern matching")
+
+                # Lexical Error
+                result = search("lexical error", j, case_sensitive=False)
+                if result is not None:
+                    tempmsg += 'G'
+                    #sequence.append("Lexical Error")
+
+                # operator Error
+                result = search("operator", j, case_sensitive=False)
+                if result is not None:
+                    tempmsg += 'H'
+                    #sequence.append("operator Error")
+
+                # File name Error
+                result = search("File name", j, case_sensitive=False)
+                if result is not None:
+                    tempmsg += 'I'
+                    #sequence.append("File name Error")
+
+            if len(tempmsg) != 0:
+                final_message += tempmsg
+            # Possible -> Unknown Error.
+            else:
+                final_message += 'J'
     return final_message

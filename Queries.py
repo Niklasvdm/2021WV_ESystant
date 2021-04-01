@@ -296,11 +296,51 @@ ORDER BY
 
 def get_query_06():
     query = """
-    SELECT r.compile_errors
-    FROM results as r 
-    INNER JOIN submissions as s on s.submission_id = r.submission_id
-    where s.user_id = "0956c2c7071ae611c2f740e3685ed470" AND r.compile_errors > '' """
+SELECT
+    r.compile_errors,a.category,a.assignment_id,a.language
+FROM
+    results AS r
+INNER JOIN submissions AS s
+ON
+    r.submission_id = s.submission_id
+INNER JOIN assignments AS a
+ON
+    a.assignment_id = s.assignment_id
+WHERE
+	s.user_id = "a706bb348b2a0c23e35ae11e4d68fc17" """
     return query
+
+def get_query_06_2():
+    query = """
+SELECT
+    r.compile_errors,a.category,a.assignment_id,a.language
+FROM
+    results AS r
+INNER JOIN submissions AS s
+ON
+    r.submission_id = s.submission_id
+INNER JOIN assignments AS a
+ON
+    a.assignment_id = s.assignment_id"""
+    return query
+
+
+
+def get_query_06_():
+    query = """
+SELECT
+    s.user_id,r.compile_errors,a.category,a.assignment_id,a.language
+FROM
+    results AS r
+INNER JOIN submissions AS s
+ON
+    r.submission_id = s.submission_id
+INNER JOIN assignments AS a
+ON
+    a.assignment_id = s.assignment_id """
+    return query
+
+
 
 
 def get_query_07():
