@@ -50,3 +50,20 @@ def make_count_dict(list_sequences, length_subsequence):
     # length_subsequence is the length of substring that is tracked
     return Counter([a[i:j] for a in list_sequences for i in range(len(a)) for j in
                     range(i + 1, len(a) + 1) if len(a[i:j]) == length_subsequence])
+
+def somefunct(listofsets, length):
+    subsets = []
+    for x in range(len(listofsets)-length+1):
+        subs = []
+        for y in range(length):
+            if len(subs) == 0:
+                subs = list(listofsets[x])
+            else:
+                temp = []
+                for a in listofsets[x + y]:
+                    for z in range(len(subs)):
+                        temp.append(subs[z]+a)
+                subs = temp
+        subsets += subs
+    return Counter(subsets)
+
