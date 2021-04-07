@@ -1,9 +1,10 @@
 import Database_Functions
 from Queries import *
-from ErrorAnalysis import *
+from ErrorFiles.ErrorAnalysis import *
 import Blob_File_Analysis
 
-host,root,passw = Database_Functions.NiklasConnectivity()
+#host,root,passw = Database_Functions.NiklasConnectivity()
+host,root,passw = Database_Functions.MaxConnectivity()
 database1617 = "esystant1617"
 database1718 = "esystant1718"
 database1819 = "esystant1819"
@@ -33,9 +34,7 @@ def analyseByStudent(query_result):
                                                                                           axis=1)
 
             my_files = files.values.tolist()
-            if len(my_files) ==0:
-                print("oops, dan maar niet")
-            elif language == 1:
+            if language == 1:
                 byAssigment.append(haskell_numerical_parser(my_files))
                 # IDGAF
             else:

@@ -89,53 +89,55 @@ def prolog_parser(msg):
 #
 #
 def prolog_numerical_parser(msg):
-    finalmsg = ""
+    final_message = []
     for i in msg:
+        errorlist = []
         if i == [bytes(b'')]:
-            finalmsg += '0'
+            final_message.append(['0'])
+            #print("Empty file")
         else:
-            tempmsg = ''
-            sequence = []
+           # sequence = []
             for j in i:
                 j = str(j)
 
                 # Syntax Error
                 result = search("Syntax Error", j, case_sensitive=False)
                 if result is not None:
-                    tempmsg += '1'
+                    errorlist.append('1')
                     #sequence.append("Syntax Error")
 
                 # Trying to modify procedure.
                 result = search("modify static", j, case_sensitive=False)
                 if result is not None:
-                    tempmsg += '2'
+                    errorlist.append('2')
                     #sequence.append("Trying to modify static procedure")
 
                 # Traceback.
                 result = search("traceback", j, case_sensitive=False)
                 if result is not None:
-                    tempmsg += '3'
+                    errorlist.append('3')
                     #sequence.append("Traceback error")
 
                 # Type error.
                 result = search("Type error", j, case_sensitive=False)
                 if result is not None:
-                    tempmsg += '4'
+                    errorlist.append('4')
                     #sequence.append("Type Error")
 
                 # Warning
                 result = search("warning", j, case_sensitive=False)
                 if result is not None:
-                    tempmsg += '5'
+                    errorlist.append('5')
                     #sequence.append("Warning")
+                #print("nonempty file")
 
-            if len(tempmsg) == 0:
-                pass
+            if len(errorlist) == 0:
+                final_message.append('6')
                 #finalmsg.append('6')
             else:
-                finalmsg += tempmsg
+                final_message.append(errorlist)
 
-    return finalmsg
+    return final_message
 
 
 def document_tfid_parser(documents):
@@ -190,6 +192,7 @@ def haskell_parser(msg):
     for i in msg:
         #i = i[2:]
         if i == [bytes(b'')]:
+            print("Empty file")
             None # todo je gebruikt i dan ook niet meer. Gewoon de elif if maken zou volgens mij genoeg zijn?
         elif len(i) != 0:
             sequence = []
@@ -296,125 +299,128 @@ def haskell_parser(msg):
 def haskell_numerical_parser(msg):
     final_message = []
     for i in msg:
+        errorlist = []
         #i = i[2:]
         if i == [bytes(b'')]:
-            None # todo je gebruikt i dan ook niet meer. Gewoon de elif if maken zou volgens mij genoeg zijn?
+           # print("Empty file")
+            final_message.append(['0'])
+            #None # todo je gebruikt i dan ook niet meer. Gewoon de elif if maken zou volgens mij genoeg zijn?
         elif len(i) != 0:
-            tempmsg = ''
             for j in i:
                 j = str(j)
                 # The Type Signature was wrong
                 result = search("The type signature", j, case_sensitive=False)
                 if result is not None:
-                    tempmsg += '1'
+                    errorlist.append('1')
                     #sequence.append("The Type Signature was wrong")
 
                 # Variable not in scope
                 result = search("Not in scope", j, case_sensitive=False)
                 if result is not None:
-                    tempmsg += '2'
+                    errorlist.append('2')
                     #sequence.append("Variable not in scope")
 
                 # Expected type not met
                 result = search("expected type", j, case_sensitive=False)
                 if result is not None:
-                    tempmsg += '3'
+                    errorlist.append('3')
                     #sequence.append("Expected type not met")
 
                 # Problem with argument(s)
                 result = search("argument", j, case_sensitive=False)
                 if result is not None:
-                    tempmsg += '4'
+                    errorlist.append('4')
                     #sequence.append("Problem with argument(s)")
 
                 # Function not in scope
                 result = search("Not in scope", j, case_sensitive=False)
                 if result is not None:
-                    tempmsg += '5'
+                    errorlist.append('5')
                     #sequence.append("Function not in scope")
 
                 # Function is not the correct type
                 result = search("Derived Instance", j, case_sensitive=False)
                 if result is not None:
-                    tempmsg += '6'
+                    errorlist.append('6')
                     #sequence.append("Function is not the correct type")
 
                 # Parse error occured
                 result = search("parse", j, case_sensitive=False)
                 if result is not None:
-                    tempmsg += '7'
+                    errorlist.append('7')
                     #sequence.append("Parse error occured")
 
                 # Instance error
                 result = search("instance", j, case_sensitive=False)
                 if result is not None:
-                    tempmsg += '8'
+                    errorlist.append('8')
                     #sequence.append("Instance error")
 
                 # Function missing
                 result = search("No explicit implementation", j, case_sensitive=False)
                 if result is not None:
-                    tempmsg += '9'
+                    errorlist.append('9')
                     #sequence.append("Function missing")
 
                 # Multiple Declarations
                 result = search("Multiple Declarations", j, case_sensitive=False)
                 if result is not None:
-                    tempmsg += 'A'
+                    errorlist.append('A')
                     #sequence.append("Multiple Declarations")
 
                 # Syntax Error
                 result = search("Syntax error", j, case_sensitive=False)
                 if result is not None:
-                    tempmsg += 'B'
+                    errorlist.append('B')
                     #sequence.append("Syntax Error")
 
                 # Pattern Binding error
                 result = search("Pattern binding", j, case_sensitive=False)
                 if result is not None:
-                    tempmsg += 'C'
+                    errorlist.append('C')
                     #sequence.append("Pattern Binding error")
 
                 # Conflicting definitions
                 result = search("conflicting definitions", j, case_sensitive=False)
                 if result is not None:
-                    tempmsg += 'D'
+                    errorlist.append('D')
                     #sequence.append("Conflicting definitions")
 
                 # Module not loaded in
                 result = search("find module", j, case_sensitive=False)
                 if result is not None:
-                    tempmsg += 'E'
+                    errorlist.append('E')
                     #sequence.append("Module not loaded in")
 
                 # Error with pattern matching
                 result = search("pattern match", j, case_sensitive=False)
                 if result is not None:
-                    tempmsg += 'F'
+                    errorlist.append('F')
                     #sequence.append("Error with pattern matching")
 
                 # Lexical Error
                 result = search("lexical error", j, case_sensitive=False)
                 if result is not None:
-                    tempmsg += 'G'
+                    errorlist.append('G')
                     #sequence.append("Lexical Error")
 
                 # operator Error
                 result = search("operator", j, case_sensitive=False)
                 if result is not None:
-                    tempmsg += 'H'
+                    errorlist.append('H')
                     #sequence.append("operator Error")
 
                 # File name Error
                 result = search("File name", j, case_sensitive=False)
                 if result is not None:
-                    tempmsg += 'I'
+                    errorlist.append('I')
                     #sequence.append("File name Error")
+              #  print("nonempty file")
 
-            if len(tempmsg) != 0:
-                final_message.append(tempmsg)
+            if len(errorlist) != 0:
+                final_message.append(errorlist)
             # Possible -> Unknown Error.
             else:
-                pass
+                final_message.append(['J'])
                 #final_message.append('J')
     return final_message

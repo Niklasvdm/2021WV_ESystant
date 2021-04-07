@@ -539,7 +539,7 @@ for (database, my_tree_query) in databasequery:
     print(str(run_results[2]) + " average haskell pass/fail correct, out of " + str(run_results[4]))
     print(str(run_results[3]) + " average deviation single predictions")
     run_results[-1].to_excel(sheetLocation+database+"BTC.xlsx",sheet_name=str(run_results[0])+"#"+str(run_results[1])+"#"+str(run_results[2])+"-"+str(run_results[4])+"#"+str(run_results[3]))
-
+"""
 
 
 
@@ -562,4 +562,3 @@ for x in run_results[6].keys():
 
         graph = pydotplus.graph_from_dot_data(dot_data)
         graph.write_png("tree" + str(i) + ".png")
-"""
