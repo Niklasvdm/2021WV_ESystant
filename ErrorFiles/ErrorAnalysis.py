@@ -89,7 +89,7 @@ def prolog_parser(msg):
 #
 #
 def prolog_numerical_parser(msg):
-    finalmsg = ''
+    finalmsg = ""
     for i in msg:
         if i == [bytes(b'')]:
             finalmsg += '0'
@@ -130,7 +130,8 @@ def prolog_numerical_parser(msg):
                     #sequence.append("Warning")
 
             if len(tempmsg) == 0:
-                finalmsg += '6'
+                pass
+                #finalmsg.append('6')
             else:
                 finalmsg += tempmsg
 
@@ -293,7 +294,7 @@ def haskell_parser(msg):
 
 
 def haskell_numerical_parser(msg):
-    final_message = ''
+    final_message = []
     for i in msg:
         #i = i[2:]
         if i == [bytes(b'')]:
@@ -411,8 +412,9 @@ def haskell_numerical_parser(msg):
                     #sequence.append("File name Error")
 
             if len(tempmsg) != 0:
-                final_message += tempmsg
+                final_message.append(tempmsg)
             # Possible -> Unknown Error.
             else:
-                final_message += 'J'
+                pass
+                #final_message.append('J')
     return final_message
