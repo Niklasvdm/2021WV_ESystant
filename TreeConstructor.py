@@ -389,10 +389,15 @@ def create_trees_with_subsets(grades_df, freq_df_user, total_freq_subset):
                 if category in freq_df_user[user].keys():
                     list_specific_freq = [freq_df_user[user][category][x] for x in list_possible_patterns]
                     features.append(list_specific_freq)
-                    #grades.append(grades_df.loc[df['column_name'] == some_value])
+                    if lan == 1:
+                        grades.append(int(grades_df.loc[grades_df['user_id'] == user]['score_haskell']))
+                    elif lan == 2:
+                        grades.append(int(grades_df.loc[grades_df['user_id'] == user]['score_prolog']))
+
                     print(list_specific_freq)
                 else:
                     continue
+            decision_trees[category] = clf.fit(features, grades)
 
 
 
