@@ -341,8 +341,6 @@ ON
     return query
 
 
-
-
 def get_query_07():
     msg = """
     SELECT r.compile_errors
@@ -351,3 +349,44 @@ def get_query_07():
     INNER JOIN assignments as a on a.assignment_id = s.assignment_id
     WHERE a.language = 2 AND s.user_id = "a706bb348b2a0c23e35ae11e4d68fc17" """
     return msg
+
+def get_query_08_1920_all():
+    query = """
+SELECT
+    s.user_id,r.compile_errors,a.category,a.assignment_id,a.language, nb_failed, style_result, s.points_awarded,
+    s.timestamp, score_prolog, score_haskell,opl_ID, a.deadline
+FROM 
+    esystant1920.submissions AS s 
+        INNER JOIN 
+    esystant1920.results AS r ON r.submission_id = s.submission_id 
+        INNER JOIN 
+    esystant1920.assignments AS a ON a.assignment_id = s.assignment_id 
+        INNER JOIN 
+    esystant1920.users AS u ON u.user_id = s.user_id 
+        INNER JOIN 
+    esystant1920.grades AS g ON g.user_id = u.user_id 
+        INNER JOIN 
+    esystant1920.education_type AS e ON e.KULopl = u.KULopl 
+where timestamp < 202001310000 """
+    return query
+def get_query_08_1920_df(name_df):
+    query = """
+SELECT  
+    user_id, 
+    category, 
+    opl_ID, 
+    SUM(nb_failed != 0) AS Failed_Submissions, 
+    SUM(nb_failed = 0) AS Successfulll_Submissions, 
+    SUM(style_result > '') AS amount_bad_style_submissions, 
+    SUM(points_awarded) AS Points, 
+    SUM(deadline * 10000 > timestamp) AS On_Time, 
+    SUM(deadline * 10000 < timestamp) AS Too_Late, 
+    language, 
+    score_prolog, 
+    score_haskell 
+FROM """ + name_df + """ 
+GROUP BY user_id , category , language 
+ORDER BY category ASC
+
+    """
+    return query

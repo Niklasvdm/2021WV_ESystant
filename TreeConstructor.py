@@ -376,3 +376,17 @@ def build_boosting_trees_with_dataframe(dataframe_to_train):
 
         decision_trees[category] = clf.fit(list_values, list_grades)
     return decision_trees
+
+def create_trees_with_subsets(grades_df, freq_df_user, total_freq_subset):
+    decision_trees = {}
+    for category in total_freq_subset.keys():
+        clf = ensemble.GradientBoostingRegressor(learning_rate=0.1, n_estimators=1000, max_depth=3)
+        data_cat = dataframe_to_train.loc[dataframe_to_train['category'] == category].drop(['user_id', 'category'],
+                                                                                           axis=1)
+        language = int(data_cat.iloc[0]['language'] % 2)  # 1 voor haskell, 0 voor Prolog.
+
+        list_values = data_cat.drop(['language', 'score_prolog', 'score_haskell'], axis=1).values.tolist()
+        list_grades = [x[language] for x in data_cat[['score_prolog', 'score_haskell']].values.tolist()]
+
+        decision_trees[category] = clf.fit(list_values, list_grades)
+    return decision_trees

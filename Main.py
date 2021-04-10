@@ -5,6 +5,7 @@ from sklearn.multioutput import MultiOutputRegressor
 
 from pandas import DataFrame
 from pandas import concat
+import pandasql
 
 
 import Database_Functions
@@ -51,7 +52,9 @@ import pydotplus
 ########################################################################################################################
 
 #host,root,passw, sheetLocation = Database_Functions.NiklasConnectivity()
-host, root, passw, sheetLocation = Database_Functions.MaxConnectivity()
+from Random_For_Now import preprocessing, get_relevant_subset
+
+host, root, passw= Database_Functions.MaxConnectivity() # , sheetLocation
 
 my_tree_query = Queries.get_query_05()  # A SQL-querry in string
   # The database that will be used
@@ -275,8 +278,6 @@ def average_deviation_boosting2(prediction, actual):
                    2 * len(prediction))
 
 
-
-
 def runBoostingRegressor(amount_of_runs, host_name, root_name, passw_root, database_name, query):
     total_true = 0  # the amount of correctly predicted pass/fail of the sum of both languages.
     total_prolog = 0  # the amount of correctly predicted pass/fail of prolog.
@@ -479,6 +480,74 @@ def run_boosting_regressor_language_split(amount_of_runs, host_name, root_name, 
     return [total_true / amount_of_runs, total_prolog / amount_of_runs, total_haskell / amount_of_runs,
             total_avg_deviation / (2*amount_of_runs), length_prediction_list, total_avg_deviation_both / amount_of_runs,df]
 
+
+def runBoostingRegressorWithSubstrings(amount_of_runs, host_name, root_name, passw_root, database_name, query):
+    total_true = 0  # the amount of correctly predicted pass/fail of the sum of both languages.
+    total_prolog = 0  # the amount of correctly predicted pass/fail of prolog.
+    total_haskell = 0  # the amount of correctly predicted pass/fail of haskell.
+    total_avg_deviation = 0  # the sum of the average deviation of each run.
+    total_avg_deviation_both = 0
+    length_prediction_list = 1  # the amount of predictions made each run.
+
+    query_result = Database_Functions.query_database_dataframe(host_name, root_name, passw_root, database_name,
+                                                               query)  # this is a dataframe with the needed data
+    query_result, big_dict = preprocessing(query_result)
+
+    query_result = pandasql.sqldf(Queries.get_query_08_1920_df("query_result"),locals())
+
+    grades = query_result[['user_id', 'score_prolog', 'score_haskell']].drop_duplicates(subset='user_id')
+    # this is a dataframe with all user_id's and all scores
+    grades.reset_index(drop=True, inplace=True)  # we reset the number index of the dataframe (purely cosmetics)
+    possible_categories = query_result.query('language==1')['category'].unique()
+    # selecting only prolog as cat
+    #possible_categories = query_result['category'].unique()
+
+   # preprocessing(host_name, root_name, passw_root, database_name, Queries.get_query_06_)
+    big_result_list = []
+    for x in range(amount_of_runs):  # in this loop the experiment gets repeated
+        print("run number " + str(x))
+        verification_df = grades.sample(frac=0.1)  # this is a random selection of 10% of the dataframe
+        train_df = grades.drop(verification_df.index)  # we drop the sample that we have selected to retain 90% to train
+
+        training_users = set(train_df['user_id'].tolist())  # a set of all selected training-users
+        relevant_subset, total_freq_subset = get_relevant_subset(training_users, big_dict)
+        trees = TreeConstructor.create_trees_with_subsets(train_df, relevant_subset, total_freq_subset)
+        data_points_training_df = query_result.iloc[np.where(query_result.user_id.isin(training_users))]
+        # A dataframe of all submissions of the selected users.
+        data_points_verification_df = query_result.drop(data_points_training_df.index)
+        # we drop the selected training data to form the verification data
+
+        my_boosting_trees = TreeConstructor.build_big_boostingtree_with_dataframe(data_points_training_df,
+                                                                                  possible_categories)
+        # this function returns a dictionary containing the trained decision-trees having the categories as key.
+
+        predicted_list, actual_verification = TreeConstructor.make_boosting_predictions_with_grades_in_df(
+            my_boosting_trees, data_points_verification_df,possible_categories)
+        #  this function returns two lists containing lists of grades in float. Predictions and Actual grades to compare
+#        for x in range(len(predicted_list)):
+#            print(predicted_list[x][0])
+#            print(actual_verification[x])
+        pass_fail_result = pass_fail_boosting2(predicted_list, actual_verification)
+        # here we calculate all data we need
+        deviation = average_deviation_boosting2(predicted_list, actual_verification)
+        total_avg_deviation += deviation[0]
+        total_avg_deviation_both += deviation[1]
+        total_true += sum([x[1] for x in pass_fail_result])
+        total_prolog += sum([x[0][0] for x in pass_fail_result])
+        total_haskell += sum([x[0][1] for x in pass_fail_result])
+        # we add all the parameters because at the end we will divide it by the total amount of runs
+        if length_prediction_list != len(pass_fail_result):
+            length_prediction_list = len(pass_fail_result)
+        big_result_list += [predicted_list[x][0].tolist() + actual_verification[x] for x in range(len(predicted_list))]
+    df = DataFrame(big_result_list,
+                       columns=["Predicted Prolog", "Predicted Haskell", "Actual Prolog", "Actual Haskell"])
+    return [total_true / amount_of_runs, total_prolog / amount_of_runs, total_haskell / amount_of_runs,
+            total_avg_deviation / amount_of_runs, length_prediction_list, total_avg_deviation_both / amount_of_runs,df]
+
+amo_runs = 1
+# Here we call the needed functions to initiate the experiment
+run_results = runBoostingRegressorWithSubstrings(amo_runs, host, root, passw, database, Queries.get_query_08_1920_all())
+
 """
 amo_runs = 15
 database = database1819
@@ -511,7 +580,7 @@ print(str(run_results[5]) + " average deviation predictions both combined")
 """
 
 #create excel sheets
-
+"""
 databasequery = [(database1617,Queries.get_query_05_1617()),(database1718,Queries.get_query_05_1718()),(database1819,Queries.get_query_05_1819())]
 for (database, my_tree_query) in databasequery:
     run_results = run_boosting_regressor_language_split(400, host, root, passw, database, my_tree_query)
@@ -539,15 +608,8 @@ for (database, my_tree_query) in databasequery:
     print(str(run_results[2]) + " average haskell pass/fail correct, out of " + str(run_results[4]))
     print(str(run_results[3]) + " average deviation single predictions")
     run_results[-1].to_excel(sheetLocation+database+"BTC.xlsx",sheet_name=str(run_results[0])+"#"+str(run_results[1])+"#"+str(run_results[2])+"-"+str(run_results[4])+"#"+str(run_results[3]))
-"""
 
 
-
-
-
-
-
-"""
 for x in run_results[6].keys():
     for i in range(0, 10):
         sub_tree = run_results[6][x].estimators_[i, 0]
@@ -562,3 +624,4 @@ for x in run_results[6].keys():
 
         graph = pydotplus.graph_from_dot_data(dot_data)
         graph.write_png("tree" + str(i) + ".png")
+"""

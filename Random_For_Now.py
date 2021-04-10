@@ -10,6 +10,9 @@ from collections import Counter
 
 # We moeten onze databases dezelfde naam geven want bij mij is dat Esystant_19_20 en we zouden ook best
 # eenzelfde passwoord gebruiken
+from ErrorFiles.StudentAnalyser import analyseByStudent
+
+
 def queryToLines(query):
     db = create_database_connection("localhost", "root", "", "esystant1920")
     my_cursor = db.cursor()
@@ -51,9 +54,10 @@ def make_count_dict(list_sequences, length_subsequence):
     return Counter([a[i:j] for a in list_sequences for i in range(len(a)) for j in
                     range(i + 1, len(a) + 1) if len(a[i:j]) == length_subsequence])
 
+
 def somefunct(listofsets, length):
     subsets = []
-    for x in range(len(listofsets)-length+1):
+    for x in range(len(listofsets) - length + 1):
         subs = []
         for y in range(length):
             if len(subs) == 0:
@@ -62,8 +66,65 @@ def somefunct(listofsets, length):
                 temp = []
                 for a in listofsets[x + y]:
                     for z in range(len(subs)):
-                        temp.append(subs[z]+a)
+                        temp.append(subs[z] + a)
                 subs = temp
         subsets += subs
     return Counter(subsets)
 
+def get_subfreq(dict_, length=3):
+    subsets_all = {key: {} for key in dict_}
+    for lan in dict_:
+        for cat in dict_[lan]:
+            subsets_cat = [Counter()]
+            for oefening in dict_[lan][cat]:
+                subsets = []
+                if len(oefening)<length:
+                    subsets = [''.join([error for compile_ev in oefening for error in compile_ev])]
+                else:
+                    for x in range(len(oefening) - length + 1):
+                        subs = []
+                        for y in range(length):
+                            if len(subs) == 0:
+                                subs = list(oefening[x])
+                            else:
+                                temp = []
+                                for a in oefening[x + y]:
+                                    for z in range(len(subs)):
+                                        temp.append(subs[z] + a)
+                                subs = temp
+                        subsets += subs
+                subsets_cat.append(Counter(subsets))
+            sum_count = sum_counters(subsets_cat)
+            subsets_all[lan][cat] = sum_count
+    return subsets_all
+
+def sum_counters(list_c):
+    sum_c = list_c[0]
+    if len(list_c)>1:
+        for counter in list_c[1:]:
+            sum_c += counter
+    return sum_c
+
+def preprocessing(query_result):
+    big_dict = {}
+    for student in query_result['user_id'].unique():
+        error_list = analyseByStudent(query_result[['user_id','compile_errors','category','assignment_id','language','nb_failed']].loc[query_result['user_id'] == student].drop(['user_id'], axis=1))
+        big_dict[student] = get_subfreq(error_list)
+    return query_result,big_dict
+
+def get_relevant_subset(training_users, big_dict):
+    subset = {}
+    dict_total = {key: None for key in big_dict[big_dict.keys()[0]]}
+
+    for user in training_users:
+        for lan in big_dict[user]:
+
+            value = big_dict[user][lan]
+            subset[user] = value
+            for cat in value:
+                if cat in dict_total[lan].keys():
+                    dict_total[lan][cat] += big_dict[user][lan][cat]
+                else:
+                    dict_total[lan][cat] = big_dict[user][lan][cat]
+
+    return subset, dict_total
