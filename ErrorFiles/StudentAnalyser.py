@@ -3,8 +3,8 @@ from Queries import *
 from ErrorFiles.ErrorAnalysis import *
 import Blob_File_Analysis
 
-#host,root,passw = Database_Functions.NiklasConnectivity()
-host,root,passw = Database_Functions.MaxConnectivity()
+host,root,passw = Database_Functions.NiklasConnectivity()
+#host,root,passw = Database_Functions.MaxConnectivity()
 database1617 = "esystant1617"
 database1718 = "esystant1718"
 database1819 = "esystant1819"

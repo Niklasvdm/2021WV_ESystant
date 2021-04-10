@@ -297,7 +297,7 @@ ORDER BY
 def get_query_06():
     query = """
 SELECT
-    r.compile_errors,a.category,a.assignment_id,a.language
+    r.compile_errors,r.nb_notimplemented,r.nb_failed,s.timestamp,a.category,a.assignment_id,a.language
 FROM
     results AS r
 INNER JOIN submissions AS s
