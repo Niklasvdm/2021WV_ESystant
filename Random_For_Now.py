@@ -114,7 +114,8 @@ def preprocessing(query_result):
 
 def get_relevant_subset(training_users, big_dict):
     subset = {}
-    dict_total = {key: None for key in big_dict[big_dict.keys()[0]]}
+
+    dict_total = {key: {} for key in big_dict[list(big_dict.keys())[0]].keys()}
 
     for user in training_users:
         for lan in big_dict[user]:

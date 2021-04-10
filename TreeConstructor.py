@@ -379,14 +379,21 @@ def build_boosting_trees_with_dataframe(dataframe_to_train):
 
 def create_trees_with_subsets(grades_df, freq_df_user, total_freq_subset):
     decision_trees = {}
-    for category in total_freq_subset.keys():
-        clf = ensemble.GradientBoostingRegressor(learning_rate=0.1, n_estimators=1000, max_depth=3)
-        data_cat = dataframe_to_train.loc[dataframe_to_train['category'] == category].drop(['user_id', 'category'],
-                                                                                           axis=1)
-        language = int(data_cat.iloc[0]['language'] % 2)  # 1 voor haskell, 0 voor Prolog.
+    for lan in total_freq_subset.keys():
+        for category in total_freq_subset[lan].keys():
+            list_possible_patterns = list(total_freq_subset[lan][category].keys())
+            clf = ensemble.GradientBoostingRegressor(learning_rate=0.1, n_estimators=1000, max_depth=3)
+            features = []
+            grades = []
+            for user in freq_df_user.keys():
+                if category in freq_df_user[user].keys():
+                    list_specific_freq = [freq_df_user[user][category][x] for x in list_possible_patterns]
+                    features.append(list_specific_freq)
+                    #grades.append(grades_df.loc[df['column_name'] == some_value])
+                    print(list_specific_freq)
+                else:
+                    continue
 
-        list_values = data_cat.drop(['language', 'score_prolog', 'score_haskell'], axis=1).values.tolist()
-        list_grades = [x[language] for x in data_cat[['score_prolog', 'score_haskell']].values.tolist()]
 
-        decision_trees[category] = clf.fit(list_values, list_grades)
+
     return decision_trees

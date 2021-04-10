@@ -36,9 +36,11 @@ def analyseByStudent(query_result):
 
             if language == 1:
                 byAssigmentHaskell.append(haskell_numerical_parser(my_files))
+                big_dict[1][category] = byAssigmentHaskell
                 # IDGAF
             else:
                 byAssigmentProlog.append(prolog_numerical_parser(my_files))
+                big_dict[2][category] = byAssigmentProlog
 
                 # ["A" , B , C , D , D , A , 0 ]
                 # for i in range( 0 ,  len(list()) - 2 )
@@ -47,8 +49,8 @@ def analyseByStudent(query_result):
 
             a += 1
         #print("the category was: " + str(category) + " there were " + str(a) + " assignments"  + " and the error messages were: \n" , byAssigment)
-        big_dict[1][category] = byAssigmentHaskell
-        big_dict[2][category] = byAssigmentProlog
+
+
     return big_dict
 
 ###
