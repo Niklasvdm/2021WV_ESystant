@@ -343,7 +343,6 @@ def runBoostingRegressor_Substrings_Time_K_L_CROSS_VALIDATION(k,l, host_name, ro
     possible_categories = query_result.query('language==1')['category'].unique()
     # selecting only prolog as cat
     # possible_categories = query_result['category'].unique()
-    amount_of_runs = 1 * l
     big_result_list = []
 
     ################################################################## CROSS VALIDATION
@@ -352,11 +351,11 @@ def runBoostingRegressor_Substrings_Time_K_L_CROSS_VALIDATION(k,l, host_name, ro
     #
     #
     #
-    amount_of_runs = k * l
+    amount_of_runs = 1 * l
     for i in range(1):  # in this loop the experiment gets repeated
         print("K run number " + str(i + 1))
         (validation_df_big, train_df_big) = get_remaining_dataset(alldata, i)
-
+        validation_df_big = train_df_big # TODO: Remove once K-L has been implemented
         subsetData = split_dataset(validation_df_big, l)
         for x in range(l):
             print("L Run number" + str(x + 1))
@@ -410,7 +409,7 @@ def runBoostingRegressor_Substrings_Time_K_L_CROSS_VALIDATION(k,l, host_name, ro
     return [total_true / amount_of_runs, total_prolog / amount_of_runs, total_haskell / amount_of_runs,
             total_avg_deviation / amount_of_runs, length_prediction_list, total_avg_deviation_both / amount_of_runs, df]
 
-run_results = runBoostingRegressor_Substrings_Time_K_L_CROSS_VALIDATION(10,4, host, root, passw, database, Queries.get_query_08_1920_all_timestamp())
+run_results = runBoostingRegressor_Substrings_Time_K_L_CROSS_VALIDATION(1,10, host, root, passw, database, Queries.get_query_08_1920_all_timestamp())
 print("amount of runs" , 1 , "with database" + database + "gives the following predictions (boosting regressor category split):")
 print(str(run_results[0]) + " average total pass/fail correct, out of " + str(run_results[4]))
 print(str(run_results[1]) + " average prolog pass/fail correct, out of " + str(run_results[4]))

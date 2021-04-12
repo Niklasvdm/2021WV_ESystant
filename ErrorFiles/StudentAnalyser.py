@@ -86,7 +86,6 @@ def analyse_by_student_wtih_time(query_result):
 
             my_files = files.values.tolist()
             # Contains Compile errors, nb_failed, nb_notimplemented,timestamp [[compile_errors,nb_failed,,nb_notimplemented,timestamp],[_,_,_]]
-            i = 0
             hops = 0
             resolveTime: datetime
             initialTimeStamp: datetime
@@ -106,11 +105,10 @@ def analyse_by_student_wtih_time(query_result):
                                                        int(timestamp[8:10]), int(timestamp[10:]))
                     finishedExercise = True
                     hops = i + 1
-
                 i += 1
+                # TODO : Fix bug .
             if not finishedExercise:
                 hops = i + 1
-                resolveTime = -1
                 big_dict_time[category] = (-1,hops)
             else:
                 resolveTime = finalTimeStamp - initialTimeStamp

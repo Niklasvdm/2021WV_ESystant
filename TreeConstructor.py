@@ -426,13 +426,15 @@ def create_trees_with_subsets_and_time(grades_df, freq_df_user, total_freq_subse
                         (_time,_hops) = (-1,-1)
                     list_specific_freq.append(_time)
                     list_specific_freq.append(_hops)
-                    features.append(list_specific_freq)
+                    #print(list_specific_freq) ## PRINT
+                    #features.append(list_specific_freq)
+                    features.append([_time,_hops])
+                    print(features)
                     if lan == 1:
                         grades.append(int(grades_df.loc[grades_df['user_id'] == user]['score_haskell']))
                     elif lan == 2:
                         grades.append(int(grades_df.loc[grades_df['user_id'] == user]['score_prolog']))
 
-                    #print(list_specific_freq)
                 else:
                     continue
             if (len(features) != 0):
@@ -478,6 +480,7 @@ def make_boosting_predictions_with_grades_in_df_times(boosting_tree, dataframe, 
             # usr_list += [_time,_hops]
 
         output_scores.append(grades_user)  # TODO: THIS IS TEMP FIX
+        #print(usr_list)
         for_tree.append(usr_list)
 
     for array in for_tree:
