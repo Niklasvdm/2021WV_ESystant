@@ -10,7 +10,7 @@ from collections import Counter
 
 # We moeten onze databases dezelfde naam geven want bij mij is dat Esystant_19_20 en we zouden ook best
 # eenzelfde passwoord gebruiken
-from ErrorFiles.StudentAnalyser import analyseByStudent
+from ErrorFiles.StudentAnalyser import analyseByStudent,analyse_by_student_wtih_time
 
 
 def queryToLines(query):
@@ -111,6 +111,16 @@ def preprocessing(query_result):
         error_list = analyseByStudent(query_result[['user_id','compile_errors','category','assignment_id','language','nb_failed']].loc[query_result['user_id'] == student].drop(['user_id'], axis=1))
         big_dict[student] = get_subfreq(error_list)
     return query_result,big_dict
+
+
+def preprocessing_2(query_result):
+    big_dict = {}
+    big_time_dict = {}
+    for student in query_result['user_id'].unique():
+        error_list,time_dict = analyse_by_student_wtih_time(query_result[['user_id','compile_errors','category','assignment_id','language','nb_failed','nb_notimplemented','timestamp']].loc[query_result['user_id'] == student].drop(['user_id'], axis=1))
+        big_dict[student] = get_subfreq(error_list)
+        big_time_dict[student] = time_dict
+    return query_result,big_dict,big_time_dict
 
 def get_relevant_subset(training_users, big_dict):
     subset = {}

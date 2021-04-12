@@ -354,6 +354,26 @@ def get_query_08_1920_all():
     query = """
 SELECT
     s.user_id,r.compile_errors,a.category,a.assignment_id,a.language, nb_failed, style_result, s.points_awarded,
+    s.timestamp, score_prolog, score_haskell,opl_ID, a.deadline , s.timestamp
+FROM 
+    esystant1920.submissions AS s 
+        INNER JOIN 
+    esystant1920.results AS r ON r.submission_id = s.submission_id 
+        INNER JOIN 
+    esystant1920.assignments AS a ON a.assignment_id = s.assignment_id 
+        INNER JOIN 
+    esystant1920.users AS u ON u.user_id = s.user_id 
+        INNER JOIN 
+    esystant1920.grades AS g ON g.user_id = u.user_id 
+        INNER JOIN 
+    esystant1920.education_type AS e ON e.KULopl = u.KULopl 
+where timestamp < 202001310000 """
+    return query
+
+def get_query_08_1920_all_timestamp():
+    query = """
+SELECT
+    s.user_id,r.compile_errors,a.category,a.assignment_id,a.language, nb_failed,nb_notimplemented, style_result, s.points_awarded,
     s.timestamp, score_prolog, score_haskell,opl_ID, a.deadline
 FROM 
     esystant1920.submissions AS s 
@@ -369,6 +389,7 @@ FROM
     esystant1920.education_type AS e ON e.KULopl = u.KULopl 
 where timestamp < 202001310000 """
     return query
+
 def get_query_08_1920_df(name_df):
     query = """
 SELECT  

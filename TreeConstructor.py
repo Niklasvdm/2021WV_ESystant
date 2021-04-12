@@ -394,7 +394,7 @@ def create_trees_with_subsets(grades_df, freq_df_user, total_freq_subset):
                     elif lan == 2:
                         grades.append(int(grades_df.loc[grades_df['user_id'] == user]['score_prolog']))
 
-                    print(list_specific_freq)
+                    #print(list_specific_freq)
                 else:
                     continue
             decision_trees[category] = clf.fit(features, grades)
@@ -402,3 +402,85 @@ def create_trees_with_subsets(grades_df, freq_df_user, total_freq_subset):
 
 
     return decision_trees
+
+# CORRECT AANGEPAST ZOALS HET NU IS!
+#
+#
+def create_trees_with_subsets_and_time(grades_df, freq_df_user, total_freq_subset,time_dict):
+    decision_trees = {}
+    for lan in total_freq_subset.keys():
+        for category in total_freq_subset[lan].keys():
+            list_possible_patterns = list(total_freq_subset[lan][category].keys())
+            clf = ensemble.GradientBoostingRegressor(learning_rate=0.1, n_estimators=1000, max_depth=3)
+            features = []
+            grades = []
+            for user in freq_df_user.keys():
+                if category in freq_df_user[user].keys():
+                    list_specific_freq = [freq_df_user[user][category][x] for x in list_possible_patterns]
+
+                    try:
+                        temp = time_dict[user]
+                        (_time,_hops) = temp[category]
+                    except:
+                        print("No user & category found.")
+                        (_time,_hops) = (-1,-1)
+                    list_specific_freq.append(_time)
+                    list_specific_freq.append(_hops)
+                    features.append(list_specific_freq)
+                    if lan == 1:
+                        grades.append(int(grades_df.loc[grades_df['user_id'] == user]['score_haskell']))
+                    elif lan == 2:
+                        grades.append(int(grades_df.loc[grades_df['user_id'] == user]['score_prolog']))
+
+                    #print(list_specific_freq)
+                else:
+                    continue
+            if (len(features) != 0):
+                decision_trees[category] = clf.fit(features, grades)
+
+    return decision_trees
+
+
+
+
+
+#   MAKE_PREDICTIONS_WITH_GRADES_IN_DF
+#   This functions takes a dictionary of decision-trees and data-points for each user for each category none or one
+#   entry and predicts grades using the decision-trees.
+#   INPUT:  decision_trees: a deicsion tree
+#           dataframe: a dataframe of submissions of users per category and user
+#   OUTPUT: output_prediction: a list of lists containing predicted score
+#           output_scores: a list of lists containing actual score
+def make_boosting_predictions_with_grades_in_df_times(boosting_tree, dataframe, categories,timedict: {}):
+    output_predictions = []
+    temp = dataframe.drop(['user_id', 'category', 'score_prolog', 'score_haskell'], axis=1)
+    length = len((temp.head(1)).to_numpy()[0])
+    for_tree = []
+    output_scores = []
+    for user in dataframe['user_id'].unique():  # We take for each user
+        usr_list = []  # EACH USER WILL HAVE A LONG LIST OF ... # TODO
+        data_usr = dataframe.loc[dataframe['user_id'] == user].drop(['user_id'], axis=1)
+        grades_user = data_usr.head(1).values.tolist()[0][-2:]
+        sequenceDict = timedict[user]
+        for category in categories:
+            data_cat = data_usr.loc[data_usr['category'] == category].drop(
+                ['category', 'score_haskell', 'score_prolog'], axis=1)
+            if data_cat.empty:
+                temp = [category] + [-1 for _ in range(length) ]
+                usr_list += temp
+            else:
+                usr_list += [category] + data_cat.values.tolist()[0]
+
+            # try:
+            #     (_time,_hops) = sequenceDict[category]
+            # except:
+            #     (_time, _hops) = (-1,-1)
+            # usr_list += [_time,_hops]
+
+        output_scores.append(grades_user)  # TODO: THIS IS TEMP FIX
+        for_tree.append(usr_list)
+
+    for array in for_tree:
+        prediction = boosting_tree.predict([array])
+        output_predictions.append(prediction)
+    return output_predictions, output_scores
