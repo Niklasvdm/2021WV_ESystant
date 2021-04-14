@@ -1,11 +1,12 @@
 import Database_Functions
 from Queries import *
 from ErrorFiles.ErrorAnalysis import *
-import Blob_File_Analysis
+
+
 import datetime
 
-host, root, passw = Database_Functions.NiklasConnectivity()
-# host,root,passw = Database_Functions.MaxConnectivity()
+#host, root, passw = Database_Functions.NiklasConnectivity()
+host,root,passw = Database_Functions.MaxConnectivity()
 database1617 = "esystant1617"
 database1718 = "esystant1718"
 database1819 = "esystant1819"
@@ -60,9 +61,9 @@ def analyseByStudent(query_result):
 ######
 
 
-myQuery = get_query_06()
+#myQuery = get_query_06()
 
-data = Database_Functions.query_database_dataframe(host, root, passw, database, myQuery)
+#data = Database_Functions.query_database_dataframe(host, root, passw, database, myQuery)
 #print(data)
 
 
@@ -70,7 +71,11 @@ def analyse_by_student_wtih_time(query_result):
     # analyseByStudent(data)
     big_dict = {1: {}, 2: {}}
     big_dict_time = {1: {}, 2: {}}
+    average_hops: int = 0
+    average_resolve_time: int = 0
+    amount_of_assignment_ids: int = 0
     for category in query_result['category'].unique():
+        amount_of_assignment_ids += 1
         language = query_result.loc[query_result['category'] == category].drop(
             ['category', 'compile_errors', 'assignment_id', 'nb_failed', 'nb_notimplemented', 'timestamp'],
             axis=1).head(1).values.tolist()[0][0]
@@ -109,7 +114,6 @@ def analyse_by_student_wtih_time(query_result):
                 # TODO : Fix bug .
             if not finishedExercise:
                 hops = i + 1
-                big_dict_time[category] = (-1,hops)
             else:
                 resolveTime = finalTimeStamp - initialTimeStamp
                 # resolveTime
@@ -138,6 +142,7 @@ def analyse_by_student_wtih_time(query_result):
 
             a += 1
         # print("the category was: " + str(category) + " there were " + str(a) + " assignments"  + " and the error messages were: \n" , byAssigment)
+        big_dict_time[category] = (average_hops,average_resolve_time)
     return (big_dict, big_dict_time)
 
 # myQuery = get_query_06()

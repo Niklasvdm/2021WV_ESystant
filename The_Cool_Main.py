@@ -15,8 +15,8 @@ import TreeConstructor
 
 import pydotplus
 
-host, root, passw = Database_Functions.NiklasConnectivity()
-# host, root, passw= Database_Functions.MaxConnectivity()
+#host,root,passw = Database_Functions.NiklasConnectivity()
+host, root, passw= Database_Functions.MaxConnectivity()
 
 my_tree_query = Queries.get_query_05()  # A SQL-querry in string
 # The database that will be used
@@ -182,11 +182,13 @@ def run_decision_tree_cross_validation(k, l, host_name, root_name, passw_root, d
 
     alldata: [] = split_dataset(grades, k)
     amount_of_runs = k * l
-    for i in range(k):  # in this loop the experiment gets repeated
+    for i in range(1):  # in this loop the experiment gets repeated
         print("K run number " + str(i + 1))
         (validation_df_big, train_df_big) = get_remaining_dataset(alldata, i)
-
+        # IF TESTING WITH K = 1:
+        validation_df_big = train_df_big
         subsetData = split_dataset(validation_df_big, l)
+
         for x in range(l):
             print("L Run number" + str(x + 1))
             (verification_df, train_df) = get_remaining_dataset(subsetData, x)

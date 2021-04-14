@@ -3,6 +3,7 @@ from Blob_File_Analysis import byteToLines, bytesToLines
 from collections import Counter
 
 
+
 # TODO comments fixen of dingen deleten
 # Functie krijgt query als input die ~~~~~~~~1 FILE ~~~~~~~~ ophaalt en die naar een rij van lijnen
 # omzet. Kan ook makkelijk geprint worden met printLines
@@ -125,13 +126,14 @@ def preprocessing_2(query_result):
 def get_relevant_subset(training_users, big_dict):
     subset = {}
 
-    dict_total = {key: {} for key in big_dict[list(big_dict.keys())[0]].keys()}
+    dict_total = {1: {}, 2: {}}
 
     for user in training_users:
+        subset[user] = {}
         for lan in big_dict[user]:
 
             value = big_dict[user][lan]
-            subset[user] = value
+            subset[user].update(value)
             for cat in value:
                 if cat in dict_total[lan].keys():
                     dict_total[lan][cat] += big_dict[user][lan][cat]
@@ -139,3 +141,32 @@ def get_relevant_subset(training_users, big_dict):
                     dict_total[lan][cat] = big_dict[user][lan][cat]
 
     return subset, dict_total
+
+def add_freq_predictions_to_df(trees, data_points_df, frequency_list_df):
+    new_col = []
+
+    for index, row in data_points_df.iterrows():
+        category = row['category']
+        if category in trees.keys():
+            predicted_score = trees[category].predict([frequency_list_df[row['user_id']][category]])
+        else:
+            predicted_score = [-1]
+        new_col.append(predicted_score[0])
+    data_points_df["Predicted_with_Freq"] = new_col
+
+    return data_points_df
+
+def make_frequency_list_df(big_dict, verification_users,total_freq_subset):
+    frequency_list_df = {}
+    for lan in total_freq_subset.keys():
+        for category in total_freq_subset[lan].keys():
+            list_possible_patterns = list(total_freq_subset[lan][category].keys())
+            features = []
+            for user in verification_users:
+                if user not in frequency_list_df.keys():
+                    frequency_list_df[user] = {}
+                if category in big_dict[user][lan].keys():
+                    list_specific_freq = [big_dict[user][lan][category][x] for x in list_possible_patterns]
+                    frequency_list_df[user][category] = list_specific_freq
+                    features.append(list_specific_freq)
+    return frequency_list_df

@@ -4,6 +4,8 @@ from sklearn import ensemble
 from sklearn.multioutput import MultiOutputRegressor
 
 from pandas import DataFrame
+import pandas
+pandas.options.mode.chained_assignment = None  # default='warn'
 from pandas import concat
 import pandasql
 
@@ -51,8 +53,10 @@ import pydotplus
 #                   - the amount of predictions that were made
 ########################################################################################################################
 
+
 #host,root,passw, sheetLocation = Database_Functions.NiklasConnectivity()
-from Random_For_Now import preprocessing, get_relevant_subset
+from Random_For_Now import preprocessing, get_relevant_subset, add_freq_predictions_to_df, \
+    make_frequency_list_df
 
 host, root, passw= Database_Functions.MaxConnectivity() # , sheetLocation
 
@@ -512,13 +516,19 @@ def runBoostingRegressorWithSubstrings(amount_of_runs, host_name, root_name, pas
         train_df = grades.drop(verification_df.index)  # we drop the sample that we have selected to retain 90% to train
 
         training_users = set(train_df['user_id'].tolist())  # a set of all selected training-users
+        verification_users = set(verification_df['user_id'].tolist())
         relevant_subset, total_freq_subset = get_relevant_subset(training_users, big_dict)
-        trees = TreeConstructor.create_trees_with_subsets(train_df, relevant_subset, total_freq_subset)
+        trees,frequency_list_df_training = TreeConstructor.create_trees_with_subsets(train_df, relevant_subset, total_freq_subset)
         data_points_training_df = query_result.iloc[np.where(query_result.user_id.isin(training_users))]
+        # we have one boosting trees per category from create_trees_with_subsets, we now predict one score per
+        # user and append this to the dataframe.
+        data_points_training_df = add_freq_predictions_to_df(trees, data_points_training_df, frequency_list_df_training)
+        frequency_list_df_ver = make_frequency_list_df(big_dict, verification_users,total_freq_subset)
+
         # A dataframe of all submissions of the selected users.
         data_points_verification_df = query_result.drop(data_points_training_df.index)
         # we drop the selected training data to form the verification data
-
+        data_points_verification_df = add_freq_predictions_to_df(trees, data_points_verification_df, frequency_list_df_ver)
         my_boosting_trees = TreeConstructor.build_big_boostingtree_with_dataframe(data_points_training_df,
                                                                                   possible_categories)
         # this function returns a dictionary containing the trained decision-trees having the categories as key.
@@ -546,9 +556,15 @@ def runBoostingRegressorWithSubstrings(amount_of_runs, host_name, root_name, pas
     return [total_true / amount_of_runs, total_prolog / amount_of_runs, total_haskell / amount_of_runs,
             total_avg_deviation / amount_of_runs, length_prediction_list, total_avg_deviation_both / amount_of_runs,df]
 
-amo_runs = 1
+amo_runs = 250
 # Here we call the needed functions to initiate the experiment
 run_results = runBoostingRegressorWithSubstrings(amo_runs, host, root, passw, database, Queries.get_query_08_1920_all())
+print(str(run_results[0]) + " average total pass/fail correct, out of " + str(run_results[4]))
+print(str(run_results[1]) + " average prolog pass/fail correct, out of " + str(run_results[4]))
+print(str(run_results[2]) + " average haskell pass/fail correct, out of " + str(run_results[4]))
+print(str(run_results[3]) + " average deviation single predictions")
+print(str(run_results[5]) + " average deviation predictions both combined")
+
 
 """
 amo_runs = 15

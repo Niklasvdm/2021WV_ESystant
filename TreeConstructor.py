@@ -379,15 +379,19 @@ def build_boosting_trees_with_dataframe(dataframe_to_train):
 
 def create_trees_with_subsets(grades_df, freq_df_user, total_freq_subset):
     decision_trees = {}
+    frequency_list_df = {}
     for lan in total_freq_subset.keys():
         for category in total_freq_subset[lan].keys():
             list_possible_patterns = list(total_freq_subset[lan][category].keys())
-            clf = ensemble.GradientBoostingRegressor(learning_rate=0.1, n_estimators=1000, max_depth=3)
+            clf = ensemble.GradientBoostingRegressor(learning_rate=0.1, n_estimators=1000, max_depth=7)
             features = []
             grades = []
             for user in freq_df_user.keys():
+                if user not in frequency_list_df.keys():
+                    frequency_list_df[user] = {}
                 if category in freq_df_user[user].keys():
                     list_specific_freq = [freq_df_user[user][category][x] for x in list_possible_patterns]
+                    frequency_list_df[user][category] = list_specific_freq
                     features.append(list_specific_freq)
                     if lan == 1:
                         grades.append(int(grades_df.loc[grades_df['user_id'] == user]['score_haskell']))
@@ -395,13 +399,12 @@ def create_trees_with_subsets(grades_df, freq_df_user, total_freq_subset):
                         grades.append(int(grades_df.loc[grades_df['user_id'] == user]['score_prolog']))
 
                     #print(list_specific_freq)
-                else:
-                    continue
+            # if len(features) != 0:
             decision_trees[category] = clf.fit(features, grades)
 
 
 
-    return decision_trees
+    return decision_trees,frequency_list_df
 
 # CORRECT AANGEPAST ZOALS HET NU IS!
 #
