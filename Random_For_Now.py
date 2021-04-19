@@ -1,6 +1,7 @@
 from Database_Functions import create_database_connection
 from Blob_File_Analysis import byteToLines, bytesToLines
 from collections import Counter
+import pandas
 
 
 
@@ -170,3 +171,26 @@ def make_frequency_list_df(big_dict, verification_users,total_freq_subset):
                     frequency_list_df[user][category] = list_specific_freq
                     features.append(list_specific_freq)
     return frequency_list_df
+
+def integrate_times_into_df(dictionary_times_and_hops,df):
+    df: pandas.DataFrame
+    dictionary_times_and_hops : {}
+    hops : [int] = []
+    resolveTime : [int] = []
+    for index,row in df.iterrows():
+        row_length = len(row)
+        user = row['user_id']
+        category = row['category']
+        Category_dict = dictionary_times_and_hops[user]
+        if category in Category_dict.keys():
+            (_hops,_time) = Category_dict[category]
+        else:
+            (_hops,_time) = (-1,-1)
+        hops.append(_hops)
+        resolveTime.append(_time)
+    df.insert(row_length - 2 , 'hops',hops)
+    df.insert(row_length - 2 , 'resolvetime',resolveTime)
+    #df['hops'] = hops
+    #df['resolvetime'] = resolveTime
+    return df
+

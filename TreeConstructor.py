@@ -163,7 +163,7 @@ def build_trees_with_dataframe(dataframe_to_train):
 #   DEFAULT VALUES: LEARNING_RATE = 0.1 , N_ESTIMATORS = 100 (higher = better most of the times) , MAX_DEPTH = 3 ,
 def build_big_boostingtree_with_dataframe(dataframe_to_train, possibleCategories):
     boosting_tree = MultiOutputRegressor(
-        ensemble.GradientBoostingRegressor(learning_rate=0.1, n_estimators=1000))
+        ensemble.GradientBoostingRegressor(learning_rate=0.1, n_estimators=1000,max_depth=3))
     temp = dataframe_to_train.drop(['user_id', 'category', 'score_prolog', 'score_haskell'], axis=1)
     length = len((temp.head(1)).to_numpy()[0])
     for_tree = []

@@ -70,12 +70,10 @@ def analyseByStudent(query_result):
 def analyse_by_student_wtih_time(query_result):
     # analyseByStudent(data)
     big_dict = {1: {}, 2: {}}
-    big_dict_time = {1: {}, 2: {}}
-    average_hops: int = 0
-    average_resolve_time: int = 0
-    amount_of_assignment_ids: int = 0
+    big_dict_time = {}
+
+
     for category in query_result['category'].unique():
-        amount_of_assignment_ids += 1
         language = query_result.loc[query_result['category'] == category].drop(
             ['category', 'compile_errors', 'assignment_id', 'nb_failed', 'nb_notimplemented', 'timestamp'],
             axis=1).head(1).values.tolist()[0][0]
@@ -84,43 +82,55 @@ def analyse_by_student_wtih_time(query_result):
         byAssigmentProlog = []
         byAssigmentHaskell = []
         a = 0
+
+        total_amount_of_hops = 0
+        total_resolve_time = 0
+        amount_of_assignment_ids: int = 0
+
         for assignment_id in category_df['assignment_id'].unique():
+            amount_of_assignment_ids += 1
+
             files = category_df.loc[category_df['assignment_id'] == assignment_id].drop(
                 ['assignment_id', 'language'],
                 axis=1)
 
             my_files = files.values.tolist()
+
             # Contains Compile errors, nb_failed, nb_notimplemented,timestamp [[compile_errors,nb_failed,,nb_notimplemented,timestamp],[_,_,_]]
             hops = 0
             resolveTime: datetime
             initialTimeStamp: datetime
             finalTimeStamp: datetime
             finishedExercise = False
-            lenList = len(my_files)
+
             i = 0
             for list in my_files:
                 [_, nb_failed, nb_notimplemented, timestamp] = list
                 timestamp = str(timestamp)
-                if (i == 0):
+                if i == 0:
                     initialTimeStamp = datetime.datetime(int(timestamp[:4]), int(timestamp[4:6]),
                                                          int(timestamp[6:8]), int(timestamp[8:10]),
                                                          int(timestamp[10:]))
-                if (nb_notimplemented == 0 and nb_failed == 0 and not finishedExercise):
+                if nb_notimplemented == 0 and nb_failed == 0 and not finishedExercise:
                     finalTimeStamp = datetime.datetime(int(timestamp[:4]), int(timestamp[4:6]), int(timestamp[6:8]),
                                                        int(timestamp[8:10]), int(timestamp[10:]))
                     finishedExercise = True
                     hops = i + 1
                 i += 1
-                # TODO : Fix bug .
+
             if not finishedExercise:
+                # If the student has not finished the exercise, we'll assign the amount of hops as the amount of tries
+                #       And the amount of time as 500.
                 hops = i + 1
+                resolveTime_minutes = 500
+
             else:
                 resolveTime = finalTimeStamp - initialTimeStamp
-                # resolveTime
-                if language == 1:
-                    big_dict_time[category] = ((resolveTime.total_seconds() / 60), hops)
-                else:
-                    big_dict_time[category] = ((resolveTime.total_seconds() / 60), hops)
+                resolveTime_minutes = resolveTime.total_seconds() / 60
+
+            total_resolve_time += resolveTime_minutes
+            total_amount_of_hops += hops
+
 
             files = category_df.loc[category_df['assignment_id'] == assignment_id].drop(
                 ['nb_notimplemented', 'timestamp'],
@@ -134,15 +144,9 @@ def analyse_by_student_wtih_time(query_result):
             else:
                 byAssigmentProlog.append(prolog_numerical_parser(my_files))
                 big_dict[2][category] = byAssigmentProlog
-
-                # ["A" , B , C , D , D , A , 0 ]
-                # for i in range( 0 ,  len(list()) - 2 )
-                #       list[i] + list[i+1] + list[ i + 2]
-                #
-
             a += 1
-        # print("the category was: " + str(category) + " there were " + str(a) + " assignments"  + " and the error messages were: \n" , byAssigment)
-        big_dict_time[category] = (average_hops,average_resolve_time)
+        big_dict_time[category] = (total_amount_of_hops / amount_of_assignment_ids,total_resolve_time / amount_of_assignment_ids)
+
     return (big_dict, big_dict_time)
 
 # myQuery = get_query_06()
