@@ -428,6 +428,21 @@ ORDER BY category ASC
     """
     return query
 
+def get_query_08_rest_dropped_attributes_df(name_df):
+    query = """
+SELECT  
+    user_id, 
+    category,
+    language, 
+    score_prolog, 
+    score_haskell 
+FROM """ + name_df + """ 
+GROUP BY user_id , category , language 
+ORDER BY category ASC
+
+    """
+    return query
+
 def get_query_09_1819_all_timestamp():
     query = """
     SELECT
