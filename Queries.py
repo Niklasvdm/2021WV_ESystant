@@ -411,3 +411,95 @@ ORDER BY category ASC
 
     """
     return query
+
+def get_query_08_1920_dropped_attributes_df(name_df):
+    query = """
+SELECT  
+    user_id, 
+    category, 
+    opl_ID, 
+    language, 
+    score_prolog, 
+    score_haskell 
+FROM """ + name_df + """ 
+GROUP BY user_id , category , language 
+ORDER BY category ASC
+
+    """
+    return query
+
+def get_query_09_1819_all_timestamp():
+    query = """
+    SELECT
+        s.user_id,r.compile_errors,a.category,a.assignment_id,a.language, nb_failed,nb_notimplemented, style_result,
+        s.timestamp, score_prolog, score_haskell, a.deadline
+    FROM 
+        submissions AS s 
+            INNER JOIN 
+        results AS r ON r.submission_id = s.submission_id 
+            INNER JOIN 
+        assignments AS a ON a.assignment_id = s.assignment_id 
+            INNER JOIN 
+        users AS u ON u.user_id = s.user_id 
+            INNER JOIN 
+        grades AS g ON g.user_id = u.user_id 
+    where timestamp < 201901310000 """
+    return query
+
+def get_query_09_1819_df(name_df):
+    query = """
+SELECT  
+    user_id, 
+    category, 
+    SUM(nb_failed != 0) AS Failed_Submissions, 
+    SUM(nb_failed = 0) AS Successfulll_Submissions, 
+    SUM(style_result > '') AS amount_bad_style_submissions, 
+    SUM(deadline * 10000 > timestamp) AS On_Time, 
+    SUM(deadline * 10000 < timestamp) AS Too_Late, 
+    language, 
+    score_prolog, 
+    score_haskell 
+FROM """ + name_df + """ 
+GROUP BY user_id , category , language 
+ORDER BY category ASC
+
+    """
+    return query
+
+def get_query_09_1718_all_timestamp():
+    query = """
+    SELECT
+        s.user_id,r.compile_errors,a.category,a.assignment_id,a.language, nb_failed,nb_notimplemented, style_result,
+        s.timestamp, score_prolog, score_haskell, a.deadline
+    FROM 
+        submissions AS s 
+            INNER JOIN 
+        results AS r ON r.submission_id = s.submission_id 
+            INNER JOIN 
+        assignments AS a ON a.assignment_id = s.assignment_id 
+            INNER JOIN 
+        users AS u ON u.user_id = s.user_id 
+            INNER JOIN 
+        grades AS g ON g.user_id = u.user_id 
+    where timestamp < 201801310000 """
+    return query
+
+def get_query_09_1617_all_timestamp():
+    query = """
+    SELECT
+        s.user_id,r.compile_errors,a.category,a.assignment_id,a.language, nb_failed,nb_notimplemented, style_result,
+        s.timestamp, g.score_prolog, g.score_haskell, a.deadline
+    FROM 
+        submissions AS s 
+            INNER JOIN 
+        results AS r ON r.submission_id = s.submission_id 
+            INNER JOIN 
+        assignments AS a ON a.assignment_id = s.assignment_id 
+            INNER JOIN 
+        users AS u ON u.user_id = s.user_id 
+            INNER JOIN 
+        grades AS g ON g.user_id = u.user_id 
+    where timestamp < 201701310000 """
+    return query
+
+

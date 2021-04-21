@@ -177,8 +177,8 @@ def integrate_times_into_df(dictionary_times_and_hops,df):
     dictionary_times_and_hops : {}
     hops : [int] = []
     resolveTime : [int] = []
+    row_length = df.shape[1]
     for index,row in df.iterrows():
-        row_length = len(row)
         user = row['user_id']
         category = row['category']
         Category_dict = dictionary_times_and_hops[user]

@@ -383,7 +383,19 @@ def create_trees_with_subsets(grades_df, freq_df_user, total_freq_subset):
     for lan in total_freq_subset.keys():
         for category in total_freq_subset[lan].keys():
             list_possible_patterns = list(total_freq_subset[lan][category].keys())
-            clf = ensemble.GradientBoostingRegressor(learning_rate=0.1, n_estimators=1000, max_depth=7)
+            # LEARNING RATE = 0.1
+            # MAXDEPTH = 7 -> Bad (< 10)
+            #       = 5 -> 10.5 Average (10 runs)
+            #       = 4 -> 11.2 Average (10 runs)
+            #       = 3 -> 11.2 Average (10 Runs) , Almost 8 with Haskell and 2.25 Average Deviation
+            #               Second run -> 9.1 avg (10 Runs), 5.5 Avg Haskell and 2.6 Avg. Deviation
+
+            # LEARNING RATE = .3
+            #           =3 - > 10.7 Right (10 Runs) , 6.5 Right (Haskell) , 2.25 Avg. Dev.
+            #
+            #n_estimators = 100
+            #
+            clf = ensemble.GradientBoostingRegressor(learning_rate=0.1, n_estimators=1000, max_depth=4)
             features = []
             grades = []
             for user in freq_df_user.keys():

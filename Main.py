@@ -575,7 +575,7 @@ def runBoostingRegressorWithSubstrings_and_Times(amount_of_runs, host_name, root
                                                                query)  # this is a dataframe with the needed data
     query_result, big_dict, time_dict = preprocessing_2(query_result)
 
-    query_result = pandasql.sqldf(Queries.get_query_08_1920_df("query_result"), locals())
+    query_result = pandasql.sqldf(Queries.get_query_09_1819_df("query_result"), locals())
 
     grades = query_result[['user_id', 'score_prolog', 'score_haskell']].drop_duplicates(subset='user_id')
     # this is a dataframe with all user_id's and all scores
@@ -627,6 +627,8 @@ def runBoostingRegressorWithSubstrings_and_Times(amount_of_runs, host_name, root
         total_true += sum([x[1] for x in pass_fail_result])
         total_prolog += sum([x[0][0] for x in pass_fail_result])
         total_haskell += sum([x[0][1] for x in pass_fail_result])
+        #
+
         # we add all the parameters because at the end we will divide it by the total amount of runs
         if length_prediction_list != len(pass_fail_result):
             length_prediction_list = len(pass_fail_result)
@@ -637,10 +639,10 @@ def runBoostingRegressorWithSubstrings_and_Times(amount_of_runs, host_name, root
             total_avg_deviation / amount_of_runs, length_prediction_list, total_avg_deviation_both / amount_of_runs, df]
 
 
-amo_runs = 10
+amo_runs = 100
 # Here we call the needed functions to initiate the experiment
-run_results = runBoostingRegressorWithSubstrings_and_Times(amo_runs, host, root, passw, database,
-                                                           Queries.get_query_08_1920_all_timestamp())
+run_results = runBoostingRegressorWithSubstrings_and_Times(amo_runs, host, root, passw, database1617,
+                                                           Queries.get_query_09_1617_all_timestamp())
 print(str(run_results[0]) + " average total pass/fail correct, out of " + str(run_results[4]))
 print(str(run_results[1]) + " average prolog pass/fail correct, out of " + str(run_results[4]))
 print(str(run_results[2]) + " average haskell pass/fail correct, out of " + str(run_results[4]))
