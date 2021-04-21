@@ -98,6 +98,7 @@ def get_remaining_dataset(Dataset, i):
     return (validator, test)
 
 def runBoostingRegressorWithSubstrings(amount_of_runs, host_name, root_name, passw_root, database_name, query,q2):
+    timer = time.perf_counter()
     total_true = 0  # the amount of correctly predicted pass/fail of the sum of both languages.
     total_prolog = 0  # the amount of correctly predicted pass/fail of prolog.
     total_haskell = 0  # the amount of correctly predicted pass/fail of haskell.
@@ -114,15 +115,16 @@ def runBoostingRegressorWithSubstrings(amount_of_runs, host_name, root_name, pas
     grades = query_result[['user_id', 'score_prolog', 'score_haskell']].drop_duplicates(subset='user_id')
     # this is a dataframe with all user_id's and all scores
     grades.reset_index(drop=True, inplace=True)  # we reset the number index of the dataframe (purely cosmetics)
-    possible_categories = query_result.query('language==1')['category'].unique()
     # selecting only prolog as cat
     # possible_categories = query_result['category'].unique()
 
     # preprocessing(host_name, root_name, passw_root, database_name, Queries.get_query_06_)
     big_result_list = []
+    df = DataFrame(columns=["Predicted Prolog", "Predicted Haskell", "Actual Prolog", "Actual Haskell"])
+    print("S-start: " + str(time.perf_counter() - timer))
     for x in range(amount_of_runs):  # in this loop the experiment gets repeated
         timer = time.perf_counter()
-        print("run number " + str(x))
+        print("run number " + str(x+1))
         verification_df = grades.sample(frac=0.1)  # this is a random selection of 10% of the dataframe
         train_df = grades.drop(verification_df.index)  # we drop the sample that we have selected to retain 90% to train
 
@@ -142,21 +144,43 @@ def runBoostingRegressorWithSubstrings(amount_of_runs, host_name, root_name, pas
         # we drop the selected training data to form the verification data
         data_points_verification_df = add_freq_predictions_to_df(trees, data_points_verification_df,
                                                                  frequency_list_df_ver)
-        my_boosting_trees = TreeConstructor.build_big_boostingtree_with_dataframe(data_points_training_df,
-                                                                                  possible_categories)
-        # this function returns a dictionary containing the trained decision-trees having the categories as key.
+        language_lists_prediction = []
+        language_lists_actual = []
+        for language in range(2, 0, -1):
+            possible_categories = query_result.query('language==' + str(language))['category'].unique()
 
-        predicted_list, actual_verification = TreeConstructor.make_boosting_predictions_with_grades_in_df(
-            my_boosting_trees, data_points_verification_df, possible_categories)
+            my_boosting_trees = TreeConstructor.build_big_language_boostingtree_with_dataframe(
+                data_points_training_df, possible_categories, language)
+            # this function returns a dictionary containing the trained decision-trees having the categories as key.
 
-        big_result_list += [predicted_list[x][0].tolist() + actual_verification[x] for x in range(len(predicted_list))]
-        print("RBRWS: "+str(time.perf_counter()-timer))
-    df = DataFrame(big_result_list,
-                   columns=["Predicted Prolog", "Predicted Haskell", "Actual Prolog", "Actual Haskell"])
+            predicted_list, actual_verification = TreeConstructor.make_language_boosting_predictions_with_grades_in_df(
+                my_boosting_trees, data_points_verification_df, possible_categories, language)
+            predicted_list = [x[0][language % 2] for x in predicted_list]
+            language_lists_prediction.append(predicted_list)
+            language_lists_actual.append(actual_verification)
+            """
+            pass_fail_result = [(predicted_list[x] >= 5 and actual_verification[x] >= 5)
+                            or (predicted_list[x] < 5 and actual_verification[x] < 5) for x in
+                            range(len(predicted_list))]  # here we calculate all data we need
+            total_avg_deviation += sum([abs(predicted_list[x] - actual_verification[x]) for x in
+                                        range(len(predicted_list))]) / len(predicted_list)
+            if (language == 1):
+                total_haskell += sum(pass_fail_result)
+            else:
+                total_prolog += sum(pass_fail_result)
+            """
+        for xx in range(0, len(language_lists_prediction), 2):
+            dfx = DataFrame({'Predicted Prolog': language_lists_prediction[xx]})
+            dfx['Predicted Haskell'] = language_lists_prediction[xx + 1]
+            dfx['Actual Prolog'] = language_lists_actual[xx]
+            dfx['Actual Haskell'] = language_lists_actual[xx + 1]
+            df = concat([df, dfx])
+        print("S: " + str(time.perf_counter() - timer))
     return df
 
 def runBoostingRegressorWithSubstrings_and_Times(amount_of_runs, host_name, root_name, passw_root, database_name,
                                                  query, q2):
+    timer = time.perf_counter()
     total_true = 0  # the amount of correctly predicted pass/fail of the sum of both languages.
     total_prolog = 0  # the amount of correctly predicted pass/fail of prolog.
     total_haskell = 0  # the amount of correctly predicted pass/fail of haskell.
@@ -173,7 +197,6 @@ def runBoostingRegressorWithSubstrings_and_Times(amount_of_runs, host_name, root
     grades = query_result[['user_id', 'score_prolog', 'score_haskell']].drop_duplicates(subset='user_id')
     # this is a dataframe with all user_id's and all scores
     grades.reset_index(drop=True, inplace=True)  # we reset the number index of the dataframe (purely cosmetics)
-    possible_categories = query_result.query('language==1')['category'].unique()
     # gras = query result + Time Dict.
     query_result = integrate_times_into_df(time_dict, query_result)
     # selecting only prolog as cat
@@ -181,9 +204,12 @@ def runBoostingRegressorWithSubstrings_and_Times(amount_of_runs, host_name, root
 
     # preprocessing(host_name, root_name, passw_root, database_name, Queries.get_query_06_)
     big_result_list = []
+    df = DataFrame(big_result_list,
+                   columns=["Predicted Prolog", "Predicted Haskell", "Actual Prolog", "Actual Haskell"])
+    print("S&T-start: " + str(time.perf_counter() - timer))
     for x in range(amount_of_runs):  # in this loop the experiment gets repeated
         timer = time.perf_counter()
-        print("run number " + str(x))
+        print("run number " + str(x+1))
         verification_df = grades.sample(frac=0.1)  # this is a random selection of 10% of the dataframe
         train_df = grades.drop(verification_df.index)  # we drop the sample that we have selected to retain 90% to train
 
@@ -203,21 +229,44 @@ def runBoostingRegressorWithSubstrings_and_Times(amount_of_runs, host_name, root
         # we drop the selected training data to form the verification data
         data_points_verification_df = add_freq_predictions_to_df(trees, data_points_verification_df,
                                                                  frequency_list_df_ver)
-        my_boosting_trees = TreeConstructor.build_big_boostingtree_with_dataframe(data_points_training_df,
-                                                                                  possible_categories)
-        # this function returns a dictionary containing the trained decision-trees having the categories as key.
+        language_lists_prediction = []
+        language_lists_actual = []
+        for language in range(2, 0, -1):
+            possible_categories = query_result.query('language==' + str(language))['category'].unique()
 
-        predicted_list, actual_verification = TreeConstructor.make_boosting_predictions_with_grades_in_df(
-            my_boosting_trees, data_points_verification_df, possible_categories)
+            my_boosting_trees = TreeConstructor.build_big_boostingtree_with_dataframe(data_points_training_df,
+                                                                                      possible_categories)
+            # this function returns a dictionary containing the trained decision-trees having the categories as key.
 
-        big_result_list += [predicted_list[x][0].tolist() + actual_verification[x] for x in range(len(predicted_list))]
-        print("RBRWSAT: " + str(time.perf_counter() - timer))
-    df = DataFrame(big_result_list,
-                   columns=["Predicted Prolog", "Predicted Haskell", "Actual Prolog", "Actual Haskell"])
+            predicted_list, actual_verification = TreeConstructor.make_boosting_predictions_with_grades_in_df(
+                my_boosting_trees, data_points_verification_df, possible_categories, language)
+            predicted_list = [x[0][language % 2] for x in predicted_list]
+            language_lists_prediction.append(predicted_list)
+            language_lists_actual.append(actual_verification)
+            """
+            pass_fail_result = [(predicted_list[x] >= 5 and actual_verification[x] >= 5)
+                            or (predicted_list[x] < 5 and actual_verification[x] < 5) for x in
+                            range(len(predicted_list))]  # here we calculate all data we need
+            total_avg_deviation += sum([abs(predicted_list[x] - actual_verification[x]) for x in
+                                        range(len(predicted_list))]) / len(predicted_list)
+            if (language == 1):
+                total_haskell += sum(pass_fail_result)
+            else:
+                total_prolog += sum(pass_fail_result)
+            """
+
+        for xx in range(0, len(language_lists_prediction), 2):
+            dfx = DataFrame({'Predicted Prolog': language_lists_prediction[xx]})
+            dfx['Predicted Haskell'] = language_lists_prediction[xx + 1]
+            dfx['Actual Prolog'] = language_lists_actual[xx]
+            dfx['Actual Haskell'] = language_lists_actual[xx + 1]
+            df = concat([df, dfx])
+        print("S&T: " + str(time.perf_counter() - timer))
     return df
 
 
 def runBoostingRegressorWithSubstrings_k_cross_validation(amount_of_runs,k, host_name, root_name, passw_root, database_name, query, q2):
+    timer = time.perf_counter()
     total_true = 0  # the amount of correctly predicted pass/fail of the sum of both languages.
     total_prolog = 0  # the amount of correctly predicted pass/fail of prolog.
     total_haskell = 0  # the amount of correctly predicted pass/fail of haskell.
@@ -234,25 +283,24 @@ def runBoostingRegressorWithSubstrings_k_cross_validation(amount_of_runs,k, host
     grades = query_result[['user_id', 'score_prolog', 'score_haskell']].drop_duplicates(subset='user_id')
     # this is a dataframe with all user_id's and all scores
     grades.reset_index(drop=True, inplace=True)  # we reset the number index of the dataframe (purely cosmetics)
-    possible_categories = query_result.query('language==1')['category'].unique()
-    # selecting only prolog as cat
-    # possible_categories = query_result['category'].unique()
 
     # preprocessing(host_name, root_name, passw_root, database_name, Queries.get_query_06_)
     big_result_list = []
+    df = DataFrame(big_result_list,
+                   columns=["Predicted Prolog", "Predicted Haskell", "Actual Prolog", "Actual Haskell"])
     ################################################################## CROSS VALIDATION
-
+    print("SKC-start: " + str(time.perf_counter() - timer))
     for i in range(amount_of_runs):  # in this loop the experiment gets repeated
+        timer = time.perf_counter()
         print("Run number " + str(i + 1))
 
         alldata: [] = split_dataset(grades, k)
 
         for x in range(k):
-            timer = time.perf_counter()
             print("K Run number" + str(x + 1))
             (verification_df, train_df) = get_remaining_dataset(alldata, x)
             #################################################################
-            print("run number " + str(x)) # we drop the sample that we have selected to retain 90% to train
+            # we drop the sample that we have selected to retain 90% to train
 
             training_users = set(train_df['user_id'].tolist())  # a set of all selected training-users
             verification_users = set(verification_df['user_id'].tolist())
@@ -270,21 +318,46 @@ def runBoostingRegressorWithSubstrings_k_cross_validation(amount_of_runs,k, host
             # we drop the selected training data to form the verification data
             data_points_verification_df = add_freq_predictions_to_df(trees, data_points_verification_df,
                                                                      frequency_list_df_ver)
-            my_boosting_trees = TreeConstructor.build_big_boostingtree_with_dataframe(data_points_training_df,
-                                                                                      possible_categories)
-            # this function returns a dictionary containing the trained decision-trees having the categories as key.
 
-            predicted_list, actual_verification = TreeConstructor.make_boosting_predictions_with_grades_in_df(
-                my_boosting_trees, data_points_verification_df, possible_categories)
+            language_lists_prediction = []
+            language_lists_actual = []
+            for language in range(2, 0, -1):
+                possible_categories = query_result.query('language==' + str(language))['category'].unique()
 
-            big_result_list += [predicted_list[x][0].tolist() + actual_verification[x] for x in range(len(predicted_list))]
-            print("RBRWSKC: " + str(time.perf_counter() - timer))
-        df = DataFrame(big_result_list,
-                   columns=["Predicted Prolog", "Predicted Haskell", "Actual Prolog", "Actual Haskell"])
+                my_boosting_trees = TreeConstructor.build_big_boostingtree_with_dataframe(data_points_training_df,
+                                                                                          possible_categories)
+                # this function returns a dictionary containing the trained decision-trees having the categories as key.
+
+                predicted_list, actual_verification = TreeConstructor.make_boosting_predictions_with_grades_in_df(
+                    my_boosting_trees, data_points_verification_df, possible_categories, language)
+
+                predicted_list = [x[0][language % 2] for x in predicted_list]
+                language_lists_prediction.append(predicted_list)
+                language_lists_actual.append(actual_verification)
+                """
+                pass_fail_result = [(predicted_list[x] >= 5 and actual_verification[x] >= 5)
+                                or (predicted_list[x] < 5 and actual_verification[x] < 5) for x in
+                                range(len(predicted_list))]  # here we calculate all data we need
+                total_avg_deviation += sum([abs(predicted_list[x] - actual_verification[x]) for x in
+                                            range(len(predicted_list))]) / len(predicted_list)
+                if (language == 1):
+                    total_haskell += sum(pass_fail_result)
+                else:
+                    total_prolog += sum(pass_fail_result)
+                """
+
+            for xx in range(0, len(language_lists_prediction), 2):
+                dfx = DataFrame({'Predicted Prolog': language_lists_prediction[xx]})
+                dfx['Predicted Haskell'] = language_lists_prediction[xx + 1]
+                dfx['Actual Prolog'] = language_lists_actual[xx]
+                dfx['Actual Haskell'] = language_lists_actual[xx + 1]
+                df = concat([df, dfx])
+            print("SKC: " + str(time.perf_counter() - timer))
     return df
 
 def runBoostingRegressorWithSubstrings_and_Times_k_cross_validation(amount_of_runs,k, host_name, root_name, passw_root, database_name,
                                                  query, q2):
+    timer = time.perf_counter()
     total_true = 0  # the amount of correctly predicted pass/fail of the sum of both languages.
     total_prolog = 0  # the amount of correctly predicted pass/fail of prolog.
     total_haskell = 0  # the amount of correctly predicted pass/fail of haskell.
@@ -301,23 +374,23 @@ def runBoostingRegressorWithSubstrings_and_Times_k_cross_validation(amount_of_ru
     grades = query_result[['user_id', 'score_prolog', 'score_haskell']].drop_duplicates(subset='user_id')
     # this is a dataframe with all user_id's and all scores
     grades.reset_index(drop=True, inplace=True)  # we reset the number index of the dataframe (purely cosmetics)
-    possible_categories = query_result.query('language==1')['category'].unique()
-    # gras = query result + Time Dict.
     query_result = integrate_times_into_df(time_dict, query_result)
     # selecting only prolog as cat
     # possible_categories = query_result['category'].unique()
 
     # preprocessing(host_name, root_name, passw_root, database_name, Queries.get_query_06_)
     big_result_list = []
+    df = DataFrame(big_result_list,
+                   columns=["Predicted Prolog", "Predicted Haskell", "Actual Prolog", "Actual Haskell"])
     ################################################################## CROSS VALIDATION
-
+    print("S&TKC-start: " + str(time.perf_counter() - timer))
     for i in range(amount_of_runs):  # in this loop the experiment gets repeated
+        timer = time.perf_counter()
         print("Run number " + str(i + 1))
 
         alldata: [] = split_dataset(grades, k)
 
         for x in range(k):
-            timer = time.perf_counter()
             print("K Run number" + str(x + 1))
             (verification_df, train_df) = get_remaining_dataset(alldata, x)
             #################################################################
@@ -337,21 +410,44 @@ def runBoostingRegressorWithSubstrings_and_Times_k_cross_validation(amount_of_ru
             # we drop the selected training data to form the verification data
             data_points_verification_df = add_freq_predictions_to_df(trees, data_points_verification_df,
                                                                      frequency_list_df_ver)
-            my_boosting_trees = TreeConstructor.build_big_boostingtree_with_dataframe(data_points_training_df,
-                                                                                      possible_categories)
-            # this function returns a dictionary containing the trained decision-trees having the categories as key.
+            language_lists_prediction = []
+            language_lists_actual = []
+            for language in range(2, 0, -1):
+                possible_categories = query_result.query('language==' + str(language))['category'].unique()
 
-            predicted_list, actual_verification = TreeConstructor.make_boosting_predictions_with_grades_in_df(
-                my_boosting_trees, data_points_verification_df, possible_categories)
+                my_boosting_trees = TreeConstructor.build_big_boostingtree_with_dataframe(data_points_training_df,
+                                                                                          possible_categories)
+                # this function returns a dictionary containing the trained decision-trees having the categories as key.
 
-            big_result_list += [predicted_list[x][0].tolist() + actual_verification[x] for x in range(len(predicted_list))]
-            print("RBRWSATKC: " + str(time.perf_counter() - timer))
+                predicted_list, actual_verification = TreeConstructor.make_boosting_predictions_with_grades_in_df(
+                    my_boosting_trees, data_points_verification_df, possible_categories, language)
+
+                predicted_list = [x[0][language % 2] for x in predicted_list]
+                language_lists_prediction.append(predicted_list)
+                language_lists_actual.append(actual_verification)
+                """
+                pass_fail_result = [(predicted_list[x] >= 5 and actual_verification[x] >= 5)
+                                or (predicted_list[x] < 5 and actual_verification[x] < 5) for x in
+                                range(len(predicted_list))]  # here we calculate all data we need
+                total_avg_deviation += sum([abs(predicted_list[x] - actual_verification[x]) for x in
+                                            range(len(predicted_list))]) / len(predicted_list)
+                if (language == 1):
+                    total_haskell += sum(pass_fail_result)
+                else:
+                    total_prolog += sum(pass_fail_result)
+                """
+
+            for xx in range(0, len(language_lists_prediction), 2):
+                dfx = DataFrame({'Predicted Prolog': language_lists_prediction[xx]})
+                dfx['Predicted Haskell'] = language_lists_prediction[xx + 1]
+                dfx['Actual Prolog'] = language_lists_actual[xx]
+                dfx['Actual Haskell'] = language_lists_actual[xx + 1]
+                df = concat([df, dfx])
+
+            print("S&TKC: " + str(time.perf_counter() - timer))
             ## END INNER K-CROSS VALIDATION LOOP
 
         # END AMOUNt_OF_RUNS LOOP
-        df = DataFrame(big_result_list,
-                       columns=["Predicted Prolog", "Predicted Haskell", "Actual Prolog", "Actual Haskell"])
-
     return df
 
 
@@ -359,25 +455,29 @@ if __name__ == "__main__":
     host, root, passw = Database_Functions.MaxConnectivity()
    # host, root, passw = Database_Functions.NiklasConnectivity()
     sheetLocation = "/Users/informatica/Desktop/BPExcel/"
-    amount_of_runs = 3
+    amount_of_runs = 10
     k = 10
     databases = ["esystant1617","esystant1718","esystant1819","esystant1920"]
     queries = [Queries.get_query_09_1617_all_timestamp(),Queries.get_query_09_1718_all_timestamp(),
                Queries.get_query_09_1819_all_timestamp(),Queries.get_query_08_1920_all_timestamp()]
     q2s = [Queries.get_query_08_rest_dropped_attributes_df,Queries.get_query_08_rest_dropped_attributes_df,
            Queries.get_query_08_rest_dropped_attributes_df, Queries.get_query_08_1920_dropped_attributes_df]
-    for x in range(len(databases)):
-        run_results = runBoostingRegressorWithSubstrings(amount_of_runs, host, root, passw, databases[x], queries[x],q2s[x])
-        run_results.to_excel(sheetLocation + databases[x] + "BTWS.xlsx")
+    #for x in range(len(databases)):
+    x = 3
+    timer = time.perf_counter()
+    run_results = runBoostingRegressorWithSubstrings(amount_of_runs, host, root, passw, databases[x], queries[x],q2s[x])
+    run_results.to_excel(sheetLocation + databases[x] + "BTWS.xlsx")
 
-        run_results = runBoostingRegressorWithSubstrings_and_Times(amount_of_runs, host, root, passw, databases[x],
-                                                                   queries[x],q2s[x])
-        run_results.to_excel(sheetLocation + databases[x] + "BTWSAT.xlsx")
+    run_results = runBoostingRegressorWithSubstrings_and_Times(amount_of_runs, host, root, passw, databases[x],
+                                                               queries[x],q2s[x])
+    run_results.to_excel(sheetLocation + databases[x] + "BTWSAT.xlsx")
 
-        run_results = runBoostingRegressorWithSubstrings_k_cross_validation(math.ceil(amount_of_runs/k), k, host, root, passw,
-                                                                            databases[x], queries[x],q2s[x])
-        run_results.to_excel(sheetLocation + databases[x] + "BTWSKC.xlsx")
+    run_results = runBoostingRegressorWithSubstrings_k_cross_validation(math.ceil(amount_of_runs/k), k, host, root, passw,
+                                                                        databases[x], queries[x],q2s[x])
+    run_results.to_excel(sheetLocation + databases[x] + "BTWSKC.xlsx")
 
-        run_results = runBoostingRegressorWithSubstrings_and_Times_k_cross_validation(math.ceil(amount_of_runs/k), k, host, root,
-                                                                            passw, databases[x], queries[x],q2s[x])
-        run_results.to_excel(sheetLocation + databases[x] + "BTWSATKC.xlsx")
+    run_results = runBoostingRegressorWithSubstrings_and_Times_k_cross_validation(math.ceil(amount_of_runs/k), k, host, root,
+                                                                        passw, databases[x], queries[x],q2s[x])
+    run_results.to_excel(sheetLocation + databases[x] + "BTWSATKC.xlsx")
+    print("TOT: " + str(time.perf_counter() - timer))
+

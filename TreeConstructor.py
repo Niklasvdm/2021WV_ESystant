@@ -170,9 +170,8 @@ def build_big_boostingtree_with_dataframe(dataframe_to_train, possibleCategories
     grades_per_user = []
     for user in dataframe_to_train['user_id'].unique():  # We take for each user
         usr_list = []  # EACH USER WILL HAVE A LONG LIST OF ... # TODO
-        data_usr = dataframe_to_train.loc[dataframe_to_train['user_id'] == user].drop(['user_id'],
-                                                                                      axis=1)  # Don't know what axis does
-        grades_user = data_usr.head(1).values.tolist()[0][-2:]
+        data_usr = dataframe_to_train.loc[dataframe_to_train['user_id'] == user].drop(['user_id'], axis=1)
+        grades_user = data_usr.head(1).values.tolist()[0][-3:-1]
         for category in possibleCategories:
             data_cat = data_usr.loc[data_usr['category'] == category].drop(
                 ['category', 'score_haskell', 'score_prolog'], axis=1)
@@ -210,7 +209,7 @@ def build_big_language_boostingtree_with_dataframe(dataframe_to_train, possibleC
         usr_list = []  # EACH USER WILL HAVE A LONG LIST OF ... # TODO
         data_usr = dataframe_to_train.loc[dataframe_to_train['user_id'] == user].drop(['user_id'],
                                                                                       axis=1)  # Don't know what axis does
-        grades_user = data_usr.head(1).values.tolist()[0][-2:]
+        grades_user = data_usr.head(1).values.tolist()[0][-3:-1]
         for category in possibleCategories:
             data_cat = data_usr.loc[data_usr['category'] == category].drop(
                 ['category', 'score_haskell', 'score_prolog'], axis=1)
@@ -303,7 +302,7 @@ def make_predictions_with_grades_in_df(decision_trees, dataframe):
 #           dataframe: a dataframe of submissions of users per category and user
 #   OUTPUT: output_prediction: a list of lists containing predicted score
 #           output_scores: a list of lists containing actual score
-def make_boosting_predictions_with_grades_in_df(boosting_tree, dataframe, categories):
+def make_boosting_predictions_with_grades_in_df(boosting_tree, dataframe, categories, language):
     output_predictions = []
     temp = dataframe.drop(['user_id', 'category', 'score_prolog', 'score_haskell'], axis=1)
     length = len((temp.head(1)).to_numpy()[0])
@@ -312,7 +311,7 @@ def make_boosting_predictions_with_grades_in_df(boosting_tree, dataframe, catego
     for user in dataframe['user_id'].unique():  # We take for each user
         usr_list = []  # EACH USER WILL HAVE A LONG LIST OF ... # TODO
         data_usr = dataframe.loc[dataframe['user_id'] == user].drop(['user_id'], axis=1)  # Don't know what axis does
-        grades_user = data_usr.head(1).values.tolist()[0][-2:]
+        grades_user = data_usr.head(1).values.tolist()[0][-3:-1]
         for category in categories:
             data_cat = data_usr.loc[data_usr['category'] == category].drop(
                 ['category', 'score_haskell', 'score_prolog'], axis=1)
@@ -321,7 +320,8 @@ def make_boosting_predictions_with_grades_in_df(boosting_tree, dataframe, catego
                 usr_list += temp
             else:
                 usr_list += [category] + data_cat.values.tolist()[0]
-        output_scores.append(grades_user)  # TODO: THIS IS TEMP FIX
+
+        output_scores.append(grades_user[language%2])  # TODO: THIS IS TEMP FIX
         for_tree.append(usr_list)
 
     for array in for_tree:
@@ -346,7 +346,7 @@ def make_language_boosting_predictions_with_grades_in_df(boosting_tree, datafram
     for user in dataframe['user_id'].unique():  # We take for each user
         usr_list = []  # EACH USER WILL HAVE A LONG LIST OF ... # TODO
         data_usr = dataframe.loc[dataframe['user_id'] == user].drop(['user_id'], axis=1)  # Don't know what axis does
-        grades_user = data_usr.head(1).values.tolist()[0][-2:]
+        grades_user = data_usr.head(1).values.tolist()[0][-3:-1]
         for category in categories:
             data_cat = data_usr.loc[data_usr['category'] == category].drop(
                 ['category', 'score_haskell', 'score_prolog'], axis=1)
@@ -477,7 +477,7 @@ def make_boosting_predictions_with_grades_in_df_times(boosting_tree, dataframe, 
     for user in dataframe['user_id'].unique():  # We take for each user
         usr_list = []  # EACH USER WILL HAVE A LONG LIST OF ... # TODO
         data_usr = dataframe.loc[dataframe['user_id'] == user].drop(['user_id'], axis=1)
-        grades_user = data_usr.head(1).values.tolist()[0][-2:]
+        grades_user = data_usr.head(1).values.tolist()[0][-3:-1]
         sequenceDict = timedict[user]
         for category in categories:
             data_cat = data_usr.loc[data_usr['category'] == category].drop(
