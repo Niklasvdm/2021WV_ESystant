@@ -57,8 +57,8 @@ import pydotplus
 from Random_For_Now import preprocessing, get_relevant_subset, add_freq_predictions_to_df, \
     make_frequency_list_df, preprocessing_2, integrate_times_into_df
 
-#host, root, passw = Database_Functions.MaxConnectivity()  # , sheetLocation
-host,root,passw = Database_Functions.NiklasConnectivity()
+host, root, passw = Database_Functions.MaxConnectivity()  # , sheetLocation
+#host,root,passw = Database_Functions.NiklasConnectivity()
 my_tree_query = Queries.get_query_05()  # A SQL-querry in string
 # The database that will be used
 database1617 = "esystant1617"
@@ -639,10 +639,9 @@ def runBoostingRegressorWithSubstrings_and_Times(amount_of_runs, host_name, root
             total_avg_deviation / amount_of_runs, length_prediction_list, total_avg_deviation_both / amount_of_runs, df]
 
 
-amo_runs = 100
+amo_runs = 1
 # Here we call the needed functions to initiate the experiment
-run_results = runBoostingRegressorWithSubstrings_and_Times(amo_runs, host, root, passw, database1617,
-                                                           Queries.get_query_09_1617_all_timestamp())
+run_results = run_decision_tree(amo_runs, host, root, passw, database1920, Queries.get_query_05())
 print(str(run_results[0]) + " average total pass/fail correct, out of " + str(run_results[4]))
 print(str(run_results[1]) + " average prolog pass/fail correct, out of " + str(run_results[4]))
 print(str(run_results[2]) + " average haskell pass/fail correct, out of " + str(run_results[4]))

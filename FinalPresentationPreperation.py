@@ -17,7 +17,6 @@ import TreeConstructor
 from Random_For_Now import preprocessing, get_relevant_subset, add_freq_predictions_to_df, \
     make_frequency_list_df, preprocessing_2, integrate_times_into_df
 
-
 #   PASS_FAIL
 #   This function evaluates given predictions with the actual score of a student. It will determine if the pass/fail
 #   prediction per language was correct, and if the overall score prediction of pass/fail was correct. It returns a
@@ -48,8 +47,6 @@ def pass_fail_boosting2(prediction, actual):
         correct_scores.append([result, result_both])
 
     return correct_scores
-
-
 
 #   AVERAGE_DEVIATION
 #   This function calculates the average points the prediction was off.
@@ -97,34 +94,11 @@ def get_remaining_dataset(Dataset, i):
             validator = concat([validator, Dataset[v]])
     return (validator, test)
 
-def runBoostingRegressorWithSubstrings(amount_of_runs, host_name, root_name, passw_root, database_name, query,q2):
-    timer = time.perf_counter()
-    total_true = 0  # the amount of correctly predicted pass/fail of the sum of both languages.
-    total_prolog = 0  # the amount of correctly predicted pass/fail of prolog.
-    total_haskell = 0  # the amount of correctly predicted pass/fail of haskell.
-    total_avg_deviation = 0  # the sum of the average deviation of each run.
-    total_avg_deviation_both = 0
-    length_prediction_list = 1  # the amount of predictions made each run.
+def runBoostingRegressorWithSubstrings(amount_of_runs, grades, query_result, big_dict):
 
-    query_result = Database_Functions.query_database_dataframe(host_name, root_name, passw_root, database_name,
-                                                               query)  # this is a dataframe with the needed data
-    query_result, big_dict = preprocessing(query_result)
-
-    query_result = pandasql.sqldf(q2("query_result"), locals())
-
-    grades = query_result[['user_id', 'score_prolog', 'score_haskell']].drop_duplicates(subset='user_id')
-    # this is a dataframe with all user_id's and all scores
-    grades.reset_index(drop=True, inplace=True)  # we reset the number index of the dataframe (purely cosmetics)
-    # selecting only prolog as cat
-    # possible_categories = query_result['category'].unique()
-
-    # preprocessing(host_name, root_name, passw_root, database_name, Queries.get_query_06_)
-    big_result_list = []
     df = DataFrame(columns=["Predicted Prolog", "Predicted Haskell", "Actual Prolog", "Actual Haskell"])
-    print("S-start: " + str(time.perf_counter() - timer))
     for x in range(amount_of_runs):  # in this loop the experiment gets repeated
-        timer = time.perf_counter()
-        print("run number " + str(x+1))
+        print("S run number " + str(x+1))
         verification_df = grades.sample(frac=0.1)  # this is a random selection of 10% of the dataframe
         train_df = grades.drop(verification_df.index)  # we drop the sample that we have selected to retain 90% to train
 
@@ -175,41 +149,13 @@ def runBoostingRegressorWithSubstrings(amount_of_runs, host_name, root_name, pas
             dfx['Actual Prolog'] = language_lists_actual[xx]
             dfx['Actual Haskell'] = language_lists_actual[xx + 1]
             df = concat([df, dfx])
-        print("S: " + str(time.perf_counter() - timer))
     return df
 
-def runBoostingRegressorWithSubstrings_and_Times(amount_of_runs, host_name, root_name, passw_root, database_name,
-                                                 query, q2):
-    timer = time.perf_counter()
-    total_true = 0  # the amount of correctly predicted pass/fail of the sum of both languages.
-    total_prolog = 0  # the amount of correctly predicted pass/fail of prolog.
-    total_haskell = 0  # the amount of correctly predicted pass/fail of haskell.
-    total_avg_deviation = 0  # the sum of the average deviation of each run.
-    total_avg_deviation_both = 0
-    length_prediction_list = 1  # the amount of predictions made each run.
+def runBoostingRegressorWithSubstrings_and_Times(amount_of_runs, grades, query_result, big_dict):
 
-    query_result = Database_Functions.query_database_dataframe(host_name, root_name, passw_root, database_name,
-                                                               query)  # this is a dataframe with the needed data
-    query_result, big_dict, time_dict = preprocessing_2(query_result)
-
-    query_result = pandasql.sqldf(q2("query_result"), locals())
-
-    grades = query_result[['user_id', 'score_prolog', 'score_haskell']].drop_duplicates(subset='user_id')
-    # this is a dataframe with all user_id's and all scores
-    grades.reset_index(drop=True, inplace=True)  # we reset the number index of the dataframe (purely cosmetics)
-    # gras = query result + Time Dict.
-    query_result = integrate_times_into_df(time_dict, query_result)
-    # selecting only prolog as cat
-    # possible_categories = query_result['category'].unique()
-
-    # preprocessing(host_name, root_name, passw_root, database_name, Queries.get_query_06_)
-    big_result_list = []
-    df = DataFrame(big_result_list,
-                   columns=["Predicted Prolog", "Predicted Haskell", "Actual Prolog", "Actual Haskell"])
-    print("S&T-start: " + str(time.perf_counter() - timer))
+    df = DataFrame(columns=["Predicted Prolog", "Predicted Haskell", "Actual Prolog", "Actual Haskell"])
     for x in range(amount_of_runs):  # in this loop the experiment gets repeated
-        timer = time.perf_counter()
-        print("run number " + str(x+1))
+        print("ST run number " + str(x+1))
         verification_df = grades.sample(frac=0.1)  # this is a random selection of 10% of the dataframe
         train_df = grades.drop(verification_df.index)  # we drop the sample that we have selected to retain 90% to train
 
@@ -261,44 +207,21 @@ def runBoostingRegressorWithSubstrings_and_Times(amount_of_runs, host_name, root
             dfx['Actual Prolog'] = language_lists_actual[xx]
             dfx['Actual Haskell'] = language_lists_actual[xx + 1]
             df = concat([df, dfx])
-        print("S&T: " + str(time.perf_counter() - timer))
     return df
 
 
-def runBoostingRegressorWithSubstrings_k_cross_validation(amount_of_runs,k, host_name, root_name, passw_root, database_name, query, q2):
-    timer = time.perf_counter()
-    total_true = 0  # the amount of correctly predicted pass/fail of the sum of both languages.
-    total_prolog = 0  # the amount of correctly predicted pass/fail of prolog.
-    total_haskell = 0  # the amount of correctly predicted pass/fail of haskell.
-    total_avg_deviation = 0  # the sum of the average deviation of each run.
-    total_avg_deviation_both = 0
-    length_prediction_list = 1  # the amount of predictions made each run.
-
-    query_result = Database_Functions.query_database_dataframe(host_name, root_name, passw_root, database_name,
-                                                               query)  # this is a dataframe with the needed data
-    query_result, big_dict = preprocessing(query_result)
-
-    query_result = pandasql.sqldf(q2("query_result"), locals())
-
-    grades = query_result[['user_id', 'score_prolog', 'score_haskell']].drop_duplicates(subset='user_id')
-    # this is a dataframe with all user_id's and all scores
-    grades.reset_index(drop=True, inplace=True)  # we reset the number index of the dataframe (purely cosmetics)
-
+def runBoostingRegressorWithSubstrings_k_cross_validation(amount_of_runs, k, grades, query_result, big_dict):
     # preprocessing(host_name, root_name, passw_root, database_name, Queries.get_query_06_)
-    big_result_list = []
-    df = DataFrame(big_result_list,
-                   columns=["Predicted Prolog", "Predicted Haskell", "Actual Prolog", "Actual Haskell"])
+    df = DataFrame(columns=["Predicted Prolog", "Predicted Haskell", "Actual Prolog", "Actual Haskell"])
     ################################################################## CROSS VALIDATION
-    print("SKC-start: " + str(time.perf_counter() - timer))
     for i in range(amount_of_runs):  # in this loop the experiment gets repeated
-        timer = time.perf_counter()
-        print("Run number " + str(i + 1))
+        print("SK Run number " + str(i + 1))
 
         alldata: [] = split_dataset(grades, k)
 
         for x in range(k):
             print("K Run number" + str(x + 1))
-            (verification_df, train_df) = get_remaining_dataset(alldata, x)
+            (train_df,verification_df) = get_remaining_dataset(alldata, x)
             #################################################################
             # we drop the sample that we have selected to retain 90% to train
 
@@ -352,47 +275,21 @@ def runBoostingRegressorWithSubstrings_k_cross_validation(amount_of_runs,k, host
                 dfx['Actual Prolog'] = language_lists_actual[xx]
                 dfx['Actual Haskell'] = language_lists_actual[xx + 1]
                 df = concat([df, dfx])
-            print("SKC: " + str(time.perf_counter() - timer))
     return df
 
-def runBoostingRegressorWithSubstrings_and_Times_k_cross_validation(amount_of_runs,k, host_name, root_name, passw_root, database_name,
-                                                 query, q2):
-    timer = time.perf_counter()
-    total_true = 0  # the amount of correctly predicted pass/fail of the sum of both languages.
-    total_prolog = 0  # the amount of correctly predicted pass/fail of prolog.
-    total_haskell = 0  # the amount of correctly predicted pass/fail of haskell.
-    total_avg_deviation = 0  # the sum of the average deviation of each run.
-    total_avg_deviation_both = 0
-    length_prediction_list = 1  # the amount of predictions made each run.
-
-    query_result = Database_Functions.query_database_dataframe(host_name, root_name, passw_root, database_name,
-                                                               query)  # this is a dataframe with the needed data
-    query_result, big_dict, time_dict = preprocessing_2(query_result)
-
-    query_result = pandasql.sqldf(q2("query_result"), locals())
-
-    grades = query_result[['user_id', 'score_prolog', 'score_haskell']].drop_duplicates(subset='user_id')
-    # this is a dataframe with all user_id's and all scores
-    grades.reset_index(drop=True, inplace=True)  # we reset the number index of the dataframe (purely cosmetics)
-    query_result = integrate_times_into_df(time_dict, query_result)
-    # selecting only prolog as cat
-    # possible_categories = query_result['category'].unique()
+def runBoostingRegressorWithSubstrings_and_Times_k_cross_validation(amount_of_runs, k, grades, query_result, big_dict):
 
     # preprocessing(host_name, root_name, passw_root, database_name, Queries.get_query_06_)
-    big_result_list = []
-    df = DataFrame(big_result_list,
-                   columns=["Predicted Prolog", "Predicted Haskell", "Actual Prolog", "Actual Haskell"])
+    df = DataFrame(columns=["Predicted Prolog", "Predicted Haskell", "Actual Prolog", "Actual Haskell"])
     ################################################################## CROSS VALIDATION
-    print("S&TKC-start: " + str(time.perf_counter() - timer))
     for i in range(amount_of_runs):  # in this loop the experiment gets repeated
-        timer = time.perf_counter()
-        print("Run number " + str(i + 1))
+        print("ST Run number " + str(i + 1))
 
         alldata: [] = split_dataset(grades, k)
 
         for x in range(k):
             print("K Run number" + str(x + 1))
-            (verification_df, train_df) = get_remaining_dataset(alldata, x)
+            (train_df,verification_df) = get_remaining_dataset(alldata, x)
             #################################################################
             training_users = set(train_df['user_id'].tolist())  # a set of all selected training-users
             verification_users = set(verification_df['user_id'].tolist())
@@ -444,7 +341,6 @@ def runBoostingRegressorWithSubstrings_and_Times_k_cross_validation(amount_of_ru
                 dfx['Actual Haskell'] = language_lists_actual[xx + 1]
                 df = concat([df, dfx])
 
-            print("S&TKC: " + str(time.perf_counter() - timer))
             ## END INNER K-CROSS VALIDATION LOOP
 
         # END AMOUNt_OF_RUNS LOOP
@@ -455,29 +351,38 @@ if __name__ == "__main__":
     host, root, passw = Database_Functions.MaxConnectivity()
    # host, root, passw = Database_Functions.NiklasConnectivity()
     sheetLocation = "/Users/informatica/Desktop/BPExcel/"
-    amount_of_runs = 10
+    amount_of_runs = 300
     k = 10
-    databases = ["esystant1617","esystant1718","esystant1819","esystant1920"]
+    databases = ["esystant1617","esystant1718","esystant1819","esystant1920","esystant1920"]
     queries = [Queries.get_query_09_1617_all_timestamp(),Queries.get_query_09_1718_all_timestamp(),
-               Queries.get_query_09_1819_all_timestamp(),Queries.get_query_08_1920_all_timestamp()]
+               Queries.get_query_09_1819_all_timestamp(),Queries.get_query_08_1920_all_timestamp(),
+               Queries.get_query_08_1920_all_timestamp()]
     q2s = [Queries.get_query_08_rest_dropped_attributes_df,Queries.get_query_08_rest_dropped_attributes_df,
-           Queries.get_query_08_rest_dropped_attributes_df, Queries.get_query_08_1920_dropped_attributes_df]
-    #for x in range(len(databases)):
-    x = 3
-    timer = time.perf_counter()
-    run_results = runBoostingRegressorWithSubstrings(amount_of_runs, host, root, passw, databases[x], queries[x],q2s[x])
-    run_results.to_excel(sheetLocation + databases[x] + "BTWS.xlsx")
+           Queries.get_query_08_rest_dropped_attributes_df, Queries.get_query_08_rest_dropped_attributes_df,
+           Queries.get_query_08_1920_dropped_attributes_df]
+    for x in range(len(databases)):
+        query_result = Database_Functions.query_database_dataframe(host, root, passw, databases[x], queries[x])
+        # this is a dataframe with the needed data
+        query_result, big_dict, time_dict = preprocessing_2(query_result)
 
-    run_results = runBoostingRegressorWithSubstrings_and_Times(amount_of_runs, host, root, passw, databases[x],
-                                                               queries[x],q2s[x])
-    run_results.to_excel(sheetLocation + databases[x] + "BTWSAT.xlsx")
+        query_result = pandasql.sqldf(q2s[x]("query_result"), locals())
 
-    run_results = runBoostingRegressorWithSubstrings_k_cross_validation(math.ceil(amount_of_runs/k), k, host, root, passw,
-                                                                        databases[x], queries[x],q2s[x])
-    run_results.to_excel(sheetLocation + databases[x] + "BTWSKC.xlsx")
+        grades = query_result[['user_id', 'score_prolog', 'score_haskell']].drop_duplicates(subset='user_id')
+        # this is a dataframe with all user_id's and all scores
+        grades.reset_index(drop=True, inplace=True)  # we reset the number index of the dataframe (purely cosmetics)
+        # selecting only prolog as cat
+        # possible_categories = query_result['category'].unique()
+        query_result_time = integrate_times_into_df(time_dict, query_result)
 
-    run_results = runBoostingRegressorWithSubstrings_and_Times_k_cross_validation(math.ceil(amount_of_runs/k), k, host, root,
-                                                                        passw, databases[x], queries[x],q2s[x])
-    run_results.to_excel(sheetLocation + databases[x] + "BTWSATKC.xlsx")
-    print("TOT: " + str(time.perf_counter() - timer))
+        run_results = runBoostingRegressorWithSubstrings(amount_of_runs, grades, query_result, big_dict)
+        run_results.to_excel(sheetLocation + databases[x] +"-"+str(x)+ "BTWS.xlsx")
+
+        run_results = runBoostingRegressorWithSubstrings_and_Times(amount_of_runs, grades, query_result_time, big_dict)
+        run_results.to_excel(sheetLocation + databases[x] + "-"+str(x)+"BTWSAT.xlsx")
+
+        run_results = runBoostingRegressorWithSubstrings_k_cross_validation(math.ceil(amount_of_runs/k), k, grades, query_result, big_dict)
+        run_results.to_excel(sheetLocation + databases[x] +"-"+str(x)+ "BTWSKC.xlsx")
+
+        run_results = runBoostingRegressorWithSubstrings_and_Times_k_cross_validation(math.ceil(amount_of_runs/k), k, grades, query_result_time, big_dict)
+        run_results.to_excel(sheetLocation + databases[x] + "-"+str(x)+"BTWSATKC.xlsx")
 
